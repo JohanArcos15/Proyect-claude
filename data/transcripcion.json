@@ -1,0 +1,27 @@
+{
+  "fuente": "assets/audio/narracion-original.m4a",
+  "duracion": 64.597,
+  "metodo": "Whisper large-v3-turbo y large-v3 (ONNX, sherpa-onnx) + VAD Silero; revisión manual de cada frase. Tiempos en segundos del audio original.",
+  "notas": [
+    "En 28,1–36,1 s el orador se corrige («que par-… que parten»); se transcribe la forma final.",
+    "En 49,9–50,3 s el tercer receptor es poco audible. Ambos modelos oyen «mu y …»; por contexto se interpreta como «delta», el tercer receptor opioide clásico."
+  ],
+  "frases": [
+    {"ini": 1.80,  "fin": 4.52,  "texto": "Hoy hablaremos de medicamentos."},
+    {"ini": 5.54,  "fin": 8.90,  "texto": "En principal, hablaremos de los opioides,"},
+    {"ini": 9.89,  "fin": 15.46, "texto": "porque son un grupo farmacológico muy interesante que actúa sobre el sistema nervioso,"},
+    {"ini": 15.72, "fin": 20.07, "texto": "en ciertos receptores del cerebro que ya veremos más adelante."},
+    {"ini": 20.77, "fin": 21.70, "texto": "Entonces…"},
+    {"ini": 22.31, "fin": 23.34, "texto": "¿qué es un opioide?"},
+    {"ini": 23.75, "fin": 27.88, "texto": "Bueno, un opioide son una serie de moléculas,"},
+    {"ini": 28.13, "fin": 33.16, "texto": "las cuales tienen una estructura específica…"},
+    {"ini": 33.25, "fin": 36.14, "texto": "que parten de un grupo familiar en específico."},
+    {"ini": 36.77, "fin": 37.80, "texto": "Entonces…"},
+    {"ini": 38.66, "fin": 42.25, "texto": "¿qué hacen o en dónde interactúan los opioides?"},
+    {"ini": 42.41, "fin": 48.46, "texto": "Bueno, los opioides interactúan sobre unos receptores en las neuronas llamados kappa,"},
+    {"ini": 49.09, "fin": 50.34, "texto": "mu y (¿delta?).", "dudoso": true},
+    {"ini": 51.91, "fin": 53.64, "texto": "En esos receptores actúa."},
+    {"ini": 54.57, "fin": 57.16, "texto": "Actúa alterando el potencial de acción,"},
+    {"ini": 57.35, "fin": 62.22, "texto": "deprimiendo el sistema nervioso para ejercer su mecanismo terapéutico."}
+  ]
+}

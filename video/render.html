@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Render del vídeo · Opioides</title>
+<link rel="stylesheet" href="../assets/fonts/fonts.css">
+<style>html, body { margin: 0; background: #000; } canvas { display: block; }</style>
+</head>
+<body>
+<canvas id="lienzo" width="1920" height="1080"></canvas>
+<script src="../assets/js/datos.js"></script>
+<script src="../assets/js/stage.js"></script>
+<script>
+(async () => {
+  const muestras = [
+    '800 100px "Bricolage Grotesque"', '700 40px "Atkinson Hyperlegible"',
+    '400 40px "Atkinson Hyperlegible"', 'italic 400 40px "Atkinson Hyperlegible"',
+    'italic 700 40px "Noto Serif Display"', '400 20px "JetBrains Mono"', '600 20px "JetBrains Mono"',
+  ];
+  await Promise.all(muestras.map(f => document.fonts.load(f, 'AaÁñμδκ')));
+  await document.fonts.ready;
+  const esc = Escenario.crear(document.getElementById('lienzo'), window.DATOS);
+  window.renderAt = t => esc.dibujar(t);
+  window.miniatura = () => esc.miniatura();
+  window.duracion = esc.duracion;
+  window.listo = true;
+})();
+</script>
+</body>
+</html>

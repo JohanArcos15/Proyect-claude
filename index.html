@@ -1,0 +1,1163 @@
+<meta charset="utf-8">
+<title>Clase animada de opioides</title>
+<meta name="description" content="Animación sincronizada con un audio sobre opioides, con módulos interactivos y aclaraciones rigurosas.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,300..800&family=JetBrains+Mono:wght@400;600&family=Noto+Serif+Display:ital,wght@1,500;1,700&display=swap">
+<style>
+  :root {
+    --bg: #F4F2F8;
+    --surface: #FFFFFF;
+    --surface-2: #ECE8F4;
+    --ink: #1C1528;
+    --muted: #5D5470;
+    --line: #D9D2E6;
+    --accent: #5B2E8C;
+    --accent-soft: #EDE4FA;
+    --mu: #C23A2A;
+    --delta: #8F6406;
+    --kappa: #0B7D6C;
+    --nop: #6446CC;
+    --k: #2E6FD6;
+    --ca: #B9561A;
+    --ok: #1C7C4A;
+    --bad: #B3261E;
+    --screen: #120D1C;
+    --screen-edge: #2B2140;
+    --shadow: 0 1px 2px rgba(28, 21, 40, .06), 0 8px 24px rgba(28, 21, 40, .06);
+    --display: "Bricolage Grotesque", "Arial Narrow", system-ui, sans-serif;
+    --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+    --greek: "Noto Serif Display", "Noto Serif", Georgia, serif;
+    --mono: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #110C1A; --surface: #1A1427; --surface-2: #231B34; --ink: #F1ECF7; --muted: #A79EBB;
+      --line: #342A48; --accent: #CDB6FF; --accent-soft: #2B2143;
+      --mu: #FF7B6B; --delta: #F2C14E; --kappa: #3FC9B0; --nop: #B69CFF; --k: #7FB2FF; --ca: #FF9A4D;
+      --ok: #6ED69A; --bad: #FF8A80; --screen-edge: #3A2E55;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .25);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #110C1A; --surface: #1A1427; --surface-2: #231B34; --ink: #F1ECF7; --muted: #A79EBB;
+    --line: #342A48; --accent: #CDB6FF; --accent-soft: #2B2143;
+    --mu: #FF7B6B; --delta: #F2C14E; --kappa: #3FC9B0; --nop: #B69CFF; --k: #7FB2FF; --ca: #FF9A4D;
+    --ok: #6ED69A; --bad: #FF8A80; --screen-edge: #3A2E55;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .25);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: var(--body); font-size: 17px; line-height: 1.55;
+    padding-inline: 16px; padding-block: 0 48px;
+  }
+  .envoltura { max-width: 1240px; margin: 0 auto; }
+  h1, h2, h3 { font-family: var(--display); text-wrap: balance; line-height: 1.05; margin: 0; }
+  p { margin: 0; }
+  a { color: var(--accent); }
+  button, input, select { font: inherit; color: inherit; }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+  .mono { font-family: var(--mono); }
+  .etiqueta {
+    font-family: var(--mono); font-size: 12.5px; font-weight: 600; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .griego { font-family: var(--greek); font-style: italic; font-weight: 700; }
+
+  /* Cabecera */
+  .cabecera { padding-block: 40px 22px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .cabecera h1 { font-size: clamp(56px, 11vw, 120px); font-weight: 800; font-stretch: 75%; letter-spacing: -.01em; }
+  .cabecera .lede { font-size: clamp(18px, 2.2vw, 21px); color: var(--muted); max-width: 62ch; }
+  .fichas { display: flex; flex-wrap: wrap; gap: 8px; }
+  .ficha {
+    display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--surface); font-family: var(--mono); font-size: 12.5px; color: var(--muted);
+  }
+  .ficha b { color: var(--ink); font-weight: 600; }
+
+  /* Reproductor */
+  .reproductor { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; align-items: start; }
+  .pantalla {
+    position: relative; background: var(--screen); border-radius: 18px; overflow: hidden;
+    border: 1px solid var(--screen-edge); box-shadow: var(--shadow);
+  }
+  .pantalla canvas { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; max-width: 100%; }
+  .boton-grande {
+    position: absolute; inset: 0; margin: auto; width: 96px; height: 96px; border-radius: 50%;
+    border: 2px solid rgba(205, 182, 255, .7); background: rgba(18, 13, 28, .72); color: #F3EEF8;
+    display: grid; place-items: center; cursor: pointer; transition: transform .15s ease, background .15s ease;
+  }
+  .boton-grande:hover { transform: scale(1.06); background: rgba(40, 28, 64, .85); }
+  .boton-grande svg { width: 38px; height: 38px; margin-left: 6px; }
+  .controles {
+    display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto auto; gap: 12px; align-items: center;
+    padding: 12px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; margin-top: 10px;
+  }
+  .ctrl {
+    height: 40px; min-width: 40px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--surface-2); cursor: pointer; display: inline-grid; place-items: center;
+  }
+  .ctrl svg { width: 18px; height: 18px; }
+  .tiempo { font-family: var(--mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .pista { position: relative; height: 40px; display: flex; align-items: center; }
+  .pista input[type=range] { width: 100%; margin: 0; accent-color: var(--accent); position: relative; z-index: 1; }
+  .marca { position: absolute; top: 6px; width: 2px; height: 8px; background: var(--muted); opacity: .6; pointer-events: none; }
+  .capitulos { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .capitulos button {
+    border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 5px 12px;
+    font-size: 14px; cursor: pointer; color: var(--muted);
+  }
+  .capitulos button[aria-current="true"] { background: var(--accent-soft); color: var(--ink); border-color: var(--accent); }
+  .capitulos .mono { font-size: 12px; margin-right: 4px; }
+
+  .sub-movil { display: none; }
+  .transcripcion {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow);
+    display: flex; flex-direction: column; max-height: min(78vh, 640px);
+  }
+  .transcripcion header { padding: 14px 16px 10px; border-bottom: 1px solid var(--line); display: grid; gap: 4px; }
+  .transcripcion header p { font-size: 13.5px; color: var(--muted); }
+  .lista-trans { overflow-y: auto; padding: 8px; display: grid; gap: 2px; }
+  .frase {
+    display: grid; grid-template-columns: 48px 1fr; gap: 8px; text-align: left; border: 0; background: none;
+    padding: 8px; border-radius: 10px; cursor: pointer; font-size: 15.5px; line-height: 1.4; color: var(--muted);
+  }
+  .frase:hover { background: var(--surface-2); }
+  .frase .mono { font-size: 12px; padding-top: 3px; font-variant-numeric: tabular-nums; }
+  .frase[aria-current="true"] { background: var(--accent-soft); color: var(--ink); }
+  .frase.sintetica { font-size: 14.5px; }
+  .separador { padding: 12px 8px 4px; }
+  .dudoso { border-bottom: 2px dotted var(--delta); }
+
+  /* Secciones */
+  main { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; margin-top: 44px; }
+  .seccion {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: clamp(18px, 3vw, 34px);
+    display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; box-shadow: var(--shadow);
+  }
+  .seccion-cab { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; align-items: baseline; }
+  .sello {
+    grid-row: span 2; font-family: var(--mono); font-size: 13px; border: 1px solid var(--line); border-radius: 999px;
+    padding: 4px 10px; background: var(--surface-2); cursor: pointer; white-space: nowrap; align-self: start; margin-top: 6px;
+    display: inline-flex; gap: 6px; align-items: center;
+  }
+  .sello svg { width: 12px; height: 12px; }
+  .seccion h2 { font-size: clamp(30px, 4.4vw, 46px); font-weight: 800; font-stretch: 85%; }
+  .cita { font-style: italic; color: var(--muted); font-size: 18px; }
+  .dos { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+  .monitor {
+    background: var(--screen); border-radius: 16px; border: 1px solid var(--screen-edge); overflow: hidden;
+  }
+  .monitor canvas { display: block; width: 100%; height: auto; max-width: 100%; }
+  .precision {
+    border: 1px solid var(--accent); background: var(--accent-soft); border-radius: 14px; padding: 14px 16px; display: grid; gap: 6px;
+  }
+  .precision .etiqueta { color: var(--accent); }
+  .opciones { display: flex; flex-wrap: wrap; gap: 8px; }
+  .opcion {
+    border: 1px solid var(--line); background: var(--surface-2); border-radius: 10px; padding: 8px 12px; cursor: pointer;
+    font-size: 15px; text-align: left;
+  }
+  .opcion[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); font-weight: 700; }
+  .detalle { display: grid; gap: 10px; }
+  .detalle h3 { font-size: 28px; font-weight: 750; }
+  .detalle p { color: var(--ink); }
+  dl.datos { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; font-size: 15.5px; }
+  dl.datos dt { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding-top: 3px; }
+  dl.datos dd { margin: 0; }
+  .copiar { border: 1px solid var(--line); background: var(--surface-2); border-radius: 8px; padding: 2px 8px; font-size: 12px; cursor: pointer; margin-left: 6px; }
+  .interruptores { display: flex; flex-wrap: wrap; gap: 14px; font-size: 15px; }
+  .interruptores label { display: inline-flex; gap: 8px; align-items: center; cursor: pointer; }
+  .interruptores input { accent-color: var(--accent); width: 18px; height: 18px; }
+
+  /* Receptores */
+  .pestanas { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+  .pestana {
+    border: 1.5px solid var(--line); background: var(--surface-2); border-radius: 14px; padding: 10px 12px; cursor: pointer;
+    display: grid; gap: 2px; text-align: left;
+  }
+  .pestana .griego { font-size: 44px; line-height: 1; }
+  .pestana .nop { font-family: var(--display); font-weight: 800; font-size: 34px; line-height: 1.2; }
+  .pestana small { font-family: var(--mono); color: var(--muted); font-size: 12px; }
+  .pestana[aria-selected="true"] { background: var(--surface); border-color: currentColor; box-shadow: var(--shadow); }
+  .c-mu { color: var(--mu); } .c-delta { color: var(--delta); } .c-kappa { color: var(--kappa); } .c-nop { color: var(--nop); }
+  .pestana > span:not(.griego):not(.nop) { color: var(--ink); font-weight: 700; }
+  .linea-tiempo { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; border-left: 2px solid var(--line); }
+  .linea-tiempo li { display: grid; grid-template-columns: 64px 1fr; gap: 12px; padding: 8px 0 8px 16px; position: relative; font-size: 15.5px; }
+  .linea-tiempo li::before { content: ""; position: absolute; left: -6px; top: 15px; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+  .linea-tiempo .mono { font-weight: 600; color: var(--accent); }
+
+  /* Simulador */
+  .mandos { display: grid; gap: 16px; }
+  .mando { display: grid; gap: 6px; }
+  .mando label { display: flex; justify-content: space-between; gap: 8px; font-size: 15px; }
+  .mando output { font-family: var(--mono); font-size: 14px; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .mando input[type=range] { width: 100%; accent-color: var(--accent); }
+  .lecturas { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+  .lectura { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--surface-2); display: grid; gap: 2px; }
+  .lectura b { font-family: var(--mono); font-size: 22px; font-variant-numeric: tabular-nums; }
+  .lectura span { font-size: 13px; color: var(--muted); }
+  ol.cascada { margin: 0; padding-left: 22px; display: grid; gap: 6px; font-size: 15.5px; }
+  ol.cascada li::marker { font-family: var(--mono); color: var(--accent); font-weight: 600; }
+  .nota-modelo { font-size: 13.5px; color: var(--muted); }
+
+  /* Circuito */
+  .conmutador { display: inline-grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; width: max-content; max-width: 100%; }
+  .conmutador button { border: 0; background: var(--surface-2); padding: 9px 16px; cursor: pointer; font-size: 15px; }
+  .conmutador button[aria-pressed="true"] { background: var(--accent); color: var(--surface); font-weight: 700; }
+  .tarjetas3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .tarj { border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 6px; background: var(--surface-2); align-content: start; }
+  .tarj h3 { font-size: 22px; font-weight: 750; }
+  .tarj p { font-size: 15px; }
+
+  /* Aclaraciones */
+  .tabla-acl { display: grid; gap: 12px; }
+  .fila-acl { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.4fr) auto; gap: 18px; border: 1px solid var(--line); border-radius: 16px; padding: 16px; align-items: start; }
+  .fila-acl .dijimos { display: grid; gap: 6px; }
+  .fila-acl .dijimos q { font-style: italic; color: var(--muted); quotes: none; }
+  .fila-acl h3 { font-size: 22px; font-weight: 750; margin-bottom: 6px; }
+  .fila-acl ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 15.5px; }
+  .fila-acl .acciones { display: grid; gap: 6px; }
+  .accion { border: 1px solid var(--line); background: var(--surface-2); border-radius: 10px; padding: 7px 12px; cursor: pointer; font-size: 14px; white-space: nowrap; display: inline-flex; gap: 6px; align-items: center; }
+  .accion svg { width: 12px; height: 12px; }
+
+  /* Quiz */
+  .quiz { display: grid; gap: 16px; }
+  .pregunta { border: 1px solid var(--line); border-radius: 16px; padding: 16px; display: grid; gap: 10px; }
+  .pregunta h3 { font-family: var(--body); font-size: 18px; font-weight: 700; line-height: 1.35; }
+  .respuestas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .resp { border: 1px solid var(--line); background: var(--surface-2); border-radius: 10px; padding: 9px 12px; text-align: left; cursor: pointer; font-size: 15.5px; }
+  .resp.bien { border-color: var(--ok); color: var(--ok); font-weight: 700; }
+  .resp.mal { border-color: var(--bad); color: var(--bad); }
+  .resp:disabled { cursor: default; }
+  .explica { font-size: 15px; color: var(--muted); }
+  .marcador { font-family: var(--mono); font-size: 15px; }
+
+  .fuentes ol { margin: 0; padding-left: 22px; display: grid; gap: 8px; font-size: 15px; }
+  .fuentes li { padding-left: 4px; }
+  footer { margin-top: 32px; color: var(--muted); font-size: 14px; display: grid; gap: 6px; }
+
+  @media (max-width: 980px) {
+    .reproductor { grid-template-columns: minmax(0, 1fr); }
+    .sub-movil { display: none; }
+  .transcripcion { max-height: 380px; }
+    .dos { grid-template-columns: minmax(0, 1fr); }
+    .fila-acl { grid-template-columns: minmax(0, 1fr); }
+    .fila-acl .acciones { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .accion { white-space: normal; justify-content: center; text-align: center; }
+    .tarjetas3 { grid-template-columns: minmax(0, 1fr); }
+  }
+  @media (max-width: 640px) {
+    body { font-size: 16px; }
+    .controles { grid-template-columns: auto minmax(0, 1fr) auto; }
+    .controles .opt { display: none; }
+    .pestanas { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .lecturas { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .respuestas { grid-template-columns: minmax(0, 1fr); }
+    .seccion-cab { grid-template-columns: minmax(0, 1fr); }
+    .sello { grid-row: auto; justify-self: start; }
+    .boton-grande { width: 72px; height: 72px; }
+    .sub-movil {
+      display: block; min-height: 3.2em; margin-top: 8px; padding: 8px 12px; border-radius: 12px;
+      background: var(--screen); color: #F3EEF8; font-weight: 700; font-size: 16px; line-height: 1.4;
+    }
+    .sub-movil .ya { color: #F3EEF8; } .sub-movil .ahora { color: #CDB6FF; text-decoration: underline; } .sub-movil .luego { color: rgba(243, 238, 248, .55); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; scroll-behavior: auto !important; }
+  }
+</style>
+
+<div class="envoltura">
+  <header class="cabecera">
+    <span class="etiqueta">Clase animada · Farmacología</span>
+    <h1>Opioides</h1>
+    <p class="lede">Un audio de 64 segundos explica qué son los opioides, dónde actúan y cómo. Aquí lo ves animado y sincronizado, lo exploras pieza a pieza y lo precisamos con rigor donde hace falta.</p>
+    <div class="fichas">
+      <span class="ficha">Narración original <b>1:04</b></span>
+      <span class="ficha">Aclaraciones <b>5</b></span>
+      <span class="ficha">Receptores <b class="griego c-mu">μ</b><b class="griego c-delta">δ</b><b class="griego c-kappa">κ</b> <b>NOP</b></span>
+    </div>
+  </header>
+
+  <section class="reproductor" aria-label="Animación sincronizada con el audio">
+    <div>
+      <div class="pantalla">
+        <canvas id="escenario" width="1280" height="720" aria-label="Animación de la clase sobre opioides"></canvas>
+        <button class="boton-grande" id="botonGrande" aria-label="Reproducir la animación">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z"/></svg>
+        </button>
+      </div>
+      <p class="sub-movil" id="subMovil"></p>
+      <div class="controles">
+        <button class="ctrl" id="botonPlay" aria-label="Reproducir">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path id="iconoPlay" d="M7 4.5v15l12.5-7.5z"/></svg>
+        </button>
+        <div class="pista" id="pista">
+          <input type="range" id="barra" min="0" max="167" step="0.01" value="0" aria-label="Posición de la animación">
+        </div>
+        <span class="tiempo" id="tiempo">0:00 / 2:47</span>
+        <select class="ctrl opt" id="velocidad" aria-label="Velocidad de reproducción">
+          <option value="0.75">0,75×</option>
+          <option value="1" selected>1×</option>
+          <option value="1.25">1,25×</option>
+        </select>
+        <button class="ctrl opt" id="botonPantalla" aria-label="Pantalla completa">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+        </button>
+      </div>
+      <nav class="capitulos" id="capitulos" aria-label="Capítulos"></nav>
+    </div>
+    <aside class="transcripcion" aria-label="Transcripción sincronizada">
+      <header>
+        <span class="etiqueta">Transcripción</span>
+        <p>Toca una frase para saltar a ese momento. La línea punteada marca el fragmento poco audible.</p>
+      </header>
+      <div class="lista-trans" id="listaTrans"></div>
+    </aside>
+    <audio id="banda" preload="auto">
+      <source src="assets/audio/banda-sonora.mp4" type="audio/mp4">
+      <source src="assets/audio/banda-sonora.webm" type="audio/webm">
+    </audio>
+  </section>
+
+  <main>
+    <!-- 1. Sistema nervioso -->
+    <section class="seccion" id="sistema">
+      <div class="seccion-cab">
+        <button class="sello" data-audio="9.89"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z"/></svg>0:09</button>
+        <h2>Dónde actúan en el cuerpo</h2>
+        <p class="cita">«…actúa sobre el sistema nervioso, en ciertos receptores del cerebro…»</p>
+      </div>
+      <div class="dos">
+        <div class="monitor"><canvas id="lienzoMapa" width="820" height="720" aria-label="Mapa del sistema nervioso con la región seleccionada"></canvas></div>
+        <div class="detalle">
+          <span class="etiqueta">Elige una zona</span>
+          <div class="opciones" id="opcionesMapa" role="group" aria-label="Zonas con receptores opioides"></div>
+          <h3 id="mapaTitulo"></h3>
+          <p id="mapaTexto"></p>
+          <p class="nota-modelo" id="mapaEfecto"></p>
+          <div class="precision">
+            <span class="etiqueta">Precisión</span>
+            <p>Los receptores opioides no están solo en el cerebro. La médula espinal, los nervios periféricos y el intestino también los tienen, y eso explica efectos como el estreñimiento o la analgesia por vía epidural.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Moléculas -->
+    <section class="seccion" id="moleculas">
+      <div class="seccion-cab">
+        <button class="sello" data-audio="22.31"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z"/></svg>0:22</button>
+        <h2>Qué es un opioide</h2>
+        <p class="cita">«…una serie de moléculas, las cuales tienen una estructura específica… de un grupo familiar…»</p>
+      </div>
+      <div class="opciones" id="opcionesMol" role="group" aria-label="Moléculas"></div>
+      <div class="dos">
+        <div class="monitor"><canvas id="lienzoMol" width="820" height="600" aria-label="Estructura química de la molécula seleccionada"></canvas></div>
+        <div class="detalle">
+          <h3 id="molNombre"></h3>
+          <dl class="datos" id="molDatos"></dl>
+          <div class="interruptores">
+            <label><input type="checkbox" id="verAnillos"> Resaltar anillos</label>
+            <label><input type="checkbox" id="verFarmacoforo" checked> Resaltar farmacóforo</label>
+          </div>
+          <p class="nota-modelo">Estructuras 2D generadas con RDKit a partir de SMILES isoméricos y verificadas por fórmula e InChIKey. Cuñas: enlace hacia el observador; líneas discontinuas: hacia atrás.</p>
+        </div>
+      </div>
+      <div class="precision">
+        <span class="etiqueta">Precisión · opiáceo ≠ opioide</span>
+        <p><b>Opiáceo</b>: sustancia obtenida del opio (morfina, codeína, tebaína) o derivada directamente de ella. <b>Opioide</b>: cualquier sustancia, natural, semisintética, sintética o producida por el propio cuerpo, que actúa sobre los receptores opioides. El fentanilo y la metadona no comparten el esqueleto de la morfina; los une el receptor. Lo que sí comparten casi todos es un farmacóforo: un anillo aromático y un nitrógeno básico que el receptor reconoce.</p>
+      </div>
+      <div class="tarjetas3">
+        <div class="tarj"><span class="etiqueta">Endógenos</span><p>β‑endorfina, encefalinas, dinorfinas, endomorfinas. Péptidos que empiezan por Tyr‑Gly‑Gly‑Phe (salvo las endomorfinas, Tyr‑Pro‑…): la tirosina aporta el fenol y el amino.</p></div>
+        <div class="tarj"><span class="etiqueta">Naturales y semisintéticos</span><p>Morfina, codeína y tebaína (del opio). Heroína, oxicodona, hidromorfona, buprenorfina y naloxona se obtienen modificándolos.</p></div>
+        <div class="tarj"><span class="etiqueta">Sintéticos</span><p>Fentanilo (fenilpiperidina), metadona (difenilheptano), petidina, tramadol. Estructuras distintas, mismo blanco farmacológico.</p></div>
+      </div>
+    </section>
+
+    <!-- 3. Receptores -->
+    <section class="seccion" id="receptores">
+      <div class="seccion-cab">
+        <button class="sello" data-audio="42.41"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z"/></svg>0:42</button>
+        <h2>Los receptores κ, μ y δ</h2>
+        <p class="cita">«…interactúan sobre unos receptores en las neuronas llamados kappa, mu y (¿delta?)»</p>
+      </div>
+      <div class="pestanas" role="tablist" id="pestanasRec"></div>
+      <div class="dos">
+        <div class="detalle" id="recDetalle" role="tabpanel"></div>
+        <div class="monitor"><canvas id="lienzoRec" width="820" height="560" aria-label="Receptor acoplado a proteína G en la membrana"></canvas></div>
+      </div>
+      <div class="dos">
+        <div class="precision">
+          <span class="etiqueta">Precisión sobre el audio</span>
+          <p>El audio nombra kappa y mu con claridad; el tercer nombre apenas se oye. Por contexto es delta: μ, δ y κ son los tres receptores opioides clásicos. Existe un cuarto miembro de la familia, el receptor NOP (de nociceptina), que la naloxona no bloquea.</p>
+        </div>
+        <div class="detalle">
+          <span class="etiqueta">Cómo se descubrieron</span>
+          <ol class="linea-tiempo">
+            <li><span class="mono">1973</span><span>Tres grupos (Pert y Snyder; Simon; Terenius) demuestran sitios de unión específicos para opiáceos en el cerebro.</span></li>
+            <li><span class="mono">1975</span><span>Hughes y Kosterlitz aíslan las encefalinas, los primeros opioides endógenos.</span></li>
+            <li><span class="mono">1976</span><span>Martin y col. proponen los receptores μ (por morfina) y κ (por ketociclazocina).</span></li>
+            <li><span class="mono">1977</span><span>Lord y col. describen el receptor δ en el conducto deferente (<i>vas deferens</i>) del ratón.</span></li>
+            <li><span class="mono">1992–94</span><span>Se clonan los genes de δ, μ, κ y del receptor huérfano ORL1, hoy NOP.</span></li>
+            <li><span class="mono">2012</span><span>Se publican las estructuras cristalográficas de los cuatro receptores.</span></li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Mecanismo -->
+    <section class="seccion" id="mecanismo">
+      <div class="seccion-cab">
+        <button class="sello" data-audio="54.57"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z"/></svg>0:54</button>
+        <h2>Cómo alteran el potencial de acción</h2>
+        <p class="cita">«…actúa alterando el potencial de acción, deprimiendo el sistema nervioso…»</p>
+      </div>
+      <div class="monitor"><canvas id="lienzoSim" width="1180" height="440" aria-label="Simulación del potencial de membrana de una neurona del dolor"></canvas></div>
+      <div class="lecturas" aria-live="polite">
+        <div class="lectura"><b id="lecReposo">−70 mV</b><span>Potencial de reposo</span></div>
+        <div class="lectura"><b id="lecEpsp">14 mV</b><span>Tamaño de cada EPSP</span></div>
+        <div class="lectura"><b id="lecDisparo">0,0</b><span>Potenciales de acción por segundo</span></div>
+        <div class="lectura"><b id="lecLib">100 %</b><span>Liberación de neurotransmisor</span></div>
+      </div>
+      <div class="dos">
+        <div class="mandos">
+          <div class="mando">
+            <label for="ocupacion">Ocupación de receptores μ por un agonista <output id="salOcup">0 %</output></label>
+            <input type="range" id="ocupacion" min="0" max="100" value="0">
+          </div>
+          <div class="mando">
+            <label for="frecuencia">Estímulos dolorosos que llegan <output id="salFrec">6 por segundo</output></label>
+            <input type="range" id="frecuencia" min="2" max="12" value="6">
+          </div>
+          <div class="interruptores">
+            <label><input type="checkbox" id="naloxona"> Añadir naloxona (desplaza al agonista)</label>
+          </div>
+          <p class="nota-modelo">Modelo ilustrativo de integración y disparo con fuga: reposo −70 mV, potencial de equilibrio del K⁺ ≈ −90 mV, umbral −55 mV. Los valores muestran la dirección y el orden de magnitud del efecto, no una medición real.</p>
+        </div>
+        <div class="detalle">
+          <span class="etiqueta">La cascada, en orden</span>
+          <ol class="cascada">
+            <li>El opioide se une al receptor (μ, δ o κ) en la membrana.</li>
+            <li>El receptor activa una proteína G inhibidora (Gi/o), que se separa en Gα y Gβγ.</li>
+            <li>Gα inhibe la adenilato ciclasa: baja el AMPc.</li>
+            <li>Gβγ abre canales GIRK: sale K⁺ y la neurona se hiperpolariza.</li>
+            <li>Gβγ cierra canales de Ca²⁺ presinápticos: se libera menos glutamato y sustancia P.</li>
+          </ol>
+          <div class="precision">
+            <span class="etiqueta">Precisión</span>
+            <p>Los opioides no cambian la forma del potencial de acción. Alejan la membrana del umbral y reducen el neurotransmisor que llega, así que se disparan menos potenciales de acción y viaja menos señal de dolor.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. Deprimir / desinhibir -->
+    <section class="seccion" id="desinhibicion">
+      <div class="seccion-cab">
+        <button class="sello" data-audio="57.35"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z"/></svg>0:57</button>
+        <h2>Deprimir… y también desinhibir</h2>
+        <p class="cita">«…deprimiendo el sistema nervioso para ejercer su mecanismo terapéutico.»</p>
+      </div>
+      <div class="conmutador" role="group" aria-label="Estado del circuito">
+        <button id="sinOpi" aria-pressed="true">Sin opioide</button>
+        <button id="conOpi" aria-pressed="false">Con opioide</button>
+      </div>
+      <div class="monitor"><canvas id="lienzoCirc" width="1180" height="380" aria-label="Circuito de recompensa: interneurona GABA, neurona de dopamina y núcleo accumbens"></canvas></div>
+      <p id="circTexto"></p>
+      <div class="tarjetas3">
+        <div class="tarj"><span class="etiqueta c-kappa">Efecto terapéutico</span><h3>Analgesia</h3><p>Uso principal. También antitusivo (codeína), antidiarreico (loperamida, que casi no entra al cerebro) y en anestesia (fentanilo, remifentanilo).</p></div>
+        <div class="tarj"><span class="etiqueta c-mu">Sobredosis</span><h3>Tríada clásica</h3><p>Depresión respiratoria, miosis (pupilas puntiformes) y coma. La depresión respiratoria, mediada por μ en el tronco encefálico, es la causa de muerte.</p></div>
+        <div class="tarj"><span class="etiqueta c-nop">Antídoto</span><h3>Naloxona</h3><p>Antagonista competitivo. Actúa en minutos pero dura menos que muchos opioides, por eso puede reaparecer la depresión respiratoria y hay que vigilar al paciente.</p></div>
+      </div>
+    </section>
+
+    <!-- 6. Aclaraciones -->
+    <section class="seccion" id="aclaraciones">
+      <div class="seccion-cab">
+        <span class="sello" aria-hidden="true">1:07</span>
+        <h2>Las cinco aclaraciones</h2>
+        <p class="cita">Lo que dice el audio, frente a una versión más precisa. Puedes escuchar ambas.</p>
+      </div>
+      <div class="tabla-acl" id="tablaAcl"></div>
+    </section>
+
+    <!-- 7. Quiz -->
+    <section class="seccion" id="quiz">
+      <div class="seccion-cab">
+        <span class="sello" aria-hidden="true">6 preguntas</span>
+        <h2>Pon a prueba lo aprendido</h2>
+        <p class="cita marcador" id="marcador">Aciertos: 0 de 6</p>
+      </div>
+      <div class="quiz" id="preguntas"></div>
+    </section>
+
+    <!-- 8. Fuentes -->
+    <section class="seccion fuentes" id="fuentes">
+      <div class="seccion-cab">
+        <span class="sello" aria-hidden="true">Rigor</span>
+        <h2>Fuentes y método</h2>
+        <p class="cita">Transcripción con Whisper large‑v3 y large‑v3‑turbo, revisada frase a frase. Estructuras con RDKit.</p>
+      </div>
+      <ol>
+        <li>Brunton LL, Knollmann BC (eds.). <i>Goodman &amp; Gilman. Las bases farmacológicas de la terapéutica</i>, 14.ª ed. McGraw‑Hill; 2023. Capítulo de opioides, analgesia y manejo del dolor.</li>
+        <li>Vanderah TW (ed.). <i>Katzung. Farmacología básica y clínica</i>, 16.ª ed. McGraw‑Hill; 2024. Capítulo de analgésicos opioides y antagonistas.</li>
+        <li>IUPHAR/BPS Guide to Pharmacology. <a href="https://www.guidetopharmacology.org/GRAC/FamilyDisplayForward?familyId=50" target="_blank" rel="noopener">Opioid receptors</a>.</li>
+        <li>Pert CB, Snyder SH. Opiate receptor: demonstration in nervous tissue. <i>Science</i>. 1973;179:1011–1014.</li>
+        <li>Hughes J, Smith TW, Kosterlitz HW, et al. Identification of two related pentapeptides from the brain with potent opiate agonist activity. <i>Nature</i>. 1975;258:577–580.</li>
+        <li>Martin WR, et al. The effects of morphine‑ and nalorphine‑like drugs in the nondependent and morphine‑dependent chronic spinal dog. <i>J Pharmacol Exp Ther</i>. 1976;197:517–532.</li>
+        <li>Lord JAH, Waterfield AA, Hughes J, Kosterlitz HW. Endogenous opioid peptides: multiple agonists and receptors. <i>Nature</i>. 1977;267:495–499.</li>
+        <li>Johnson SW, North RA. Opioids excite dopamine neurons by hyperpolarization of local interneurons. <i>J Neurosci</i>. 1992;12:483–488.</li>
+        <li>Manglik A, et al. Crystal structure of the µ‑opioid receptor bound to a morphinan antagonist. <i>Nature</i>. 2012;485:321–326.</li>
+        <li>Al‑Hasani R, Bruchas MR. Molecular mechanisms of opioid receptor‑dependent signaling and behavior. <i>Anesthesiology</i>. 2011;115:1363–1381.</li>
+        <li>Organización Mundial de la Salud. <a href="https://www.who.int/news-room/fact-sheets/detail/opioid-overdose" target="_blank" rel="noopener">Opioid overdose</a> (nota descriptiva).</li>
+      </ol>
+    </section>
+  </main>
+
+  <footer>
+    <p>Contenido educativo. No sustituye la orientación de un profesional de la salud.</p>
+    <p>Narración: audio original. Voz de las aclaraciones: síntesis Piper (es‑MX, Apache‑2.0). Música: generada para este proyecto.</p>
+  </footer>
+</div>
+
+<script src="assets/js/datos.js"></script>
+<script src="assets/js/stage.js"></script>
+<script>
+(function () {
+  'use strict';
+  const D = window.DATOS;
+  const E = window.Escenario;
+  const U = E.util;
+  const P = E.PALETA;
+  const Fm = E.FUENTES;
+  const N = D.offsetNarracion;
+  const reducir = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const fmt = s => { s = Math.max(0, s); return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`; };
+  const $ = id => document.getElementById(id);
+  const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+  const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* sin almacenamiento */ } };
+
+  // Ajusta un lienzo a su ancho visible y devuelve la escala lógica.
+  function preparar(canvas, anchoLogico) {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const ancho = canvas.getBoundingClientRect().width || anchoLogico;
+    if (!canvas._alto) canvas._alto = canvas.height;
+    const w = Math.round(ancho * dpr);
+    const h = Math.round(w * canvas._alto / anchoLogico);
+    if (canvas.width !== w) { canvas.width = w; canvas.height = h; }
+    const ctx = canvas.getContext('2d');
+    const k = w / anchoLogico;
+    ctx.setTransform(k, 0, 0, k, 0, 0);
+    return ctx;
+  }
+  function fondoMonitor(ctx, w, h) {
+    const g = ctx.createRadialGradient(w * 0.6, 0, 20, w * 0.5, h * 0.5, w * 0.8);
+    g.addColorStop(0, '#271B3D'); g.addColorStop(0.55, '#171026'); g.addColorStop(1, '#0D0915');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+  }
+
+  // ---------------------------------------------------------- reproductor
+  const audio = $('banda');
+  const lienzo = $('escenario');
+  const esc = E.crear(lienzo, D);
+  let iniciado = false;
+  const POSTER = 4.3;
+  const barra = $('barra');
+  barra.max = D.duracion.toFixed(2);
+
+  function tActual() { return iniciado ? audio.currentTime : POSTER; }
+  function redimensionar() {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const w = Math.min(1920, Math.round(lienzo.getBoundingClientRect().width * dpr));
+    if (w > 0 && lienzo.width !== w) { lienzo.width = w; lienzo.height = Math.round(w * 9 / 16); }
+    pintar();
+  }
+  // Bloques de subtítulo (mismo troceado que el escenario) para la línea móvil.
+  const bloquesSub = [];
+  function trocearSub(pal) {
+    let act = [];
+    const cerrar = () => { if (act.length) bloquesSub.push({ pal: act, t0: act[0].t0, t1: act[act.length - 1].t1 }); act = []; };
+    pal.forEach(w => {
+      act.push(w);
+      const largo = act.map(x => x.w).join(' ').length, u = w.w[w.w.length - 1];
+      if ('.;:?!'.includes(u) || (u === ',' && largo > 26) || largo > 52) cerrar();
+    });
+    cerrar();
+  }
+  D.frases.forEach(f => trocearSub(f.palabras));
+  D.locuciones.forEach(l => trocearSub(l.palabras));
+  bloquesSub.sort((a, b) => a.t0 - b.t0);
+  let subPrevio = null;
+  function subtituloMovil(t) {
+    const b = iniciado ? bloquesSub.find((x, i) => t >= x.t0 - 0.12 && t < Math.min(x.t1 + 0.7, bloquesSub[i + 1] ? bloquesSub[i + 1].t0 : Infinity)) : null;
+    const clave = b ? b.t0 + ':' + b.pal.findIndex(w => t < w.t1) : 'nada';
+    if (clave === subPrevio) return;
+    subPrevio = clave;
+    const el = $('subMovil');
+    el.innerHTML = '';
+    if (!b) return;
+    b.pal.forEach(w => {
+      const sp = document.createElement('span');
+      sp.className = t >= w.t1 ? 'ya' : t >= w.t0 ? 'ahora' : 'luego';
+      sp.textContent = w.w + ' ';
+      el.appendChild(sp);
+    });
+  }
+  function pintar() {
+    const t = tActual();
+    esc.dibujar(t);
+    subtituloMovil(t);
+    barra.value = iniciado ? t : 0;
+    $('tiempo').textContent = `${fmt(iniciado ? t : 0)} / ${fmt(D.duracion)}`;
+    marcarCapitulo(t);
+    marcarFrase(t);
+  }
+  function bucle() { pintar(); if (!audio.paused) requestAnimationFrame(bucle); }
+  function iconos() {
+    const pausa = !audio.paused;
+    $('iconoPlay').setAttribute('d', pausa ? 'M6 4.5h4v15H6zM14 4.5h4v15h-4z' : 'M7 4.5v15l12.5-7.5z');
+    $('botonPlay').setAttribute('aria-label', pausa ? 'Pausar' : 'Reproducir');
+    $('botonGrande').hidden = pausa;
+  }
+  function alternar() {
+    if (audio.paused) { iniciado = true; audio.play().catch(() => {}); } else audio.pause();
+  }
+  function ir(t, reproducir) {
+    iniciado = true;
+    audio.currentTime = Math.max(0, Math.min(D.duracion - 0.05, t));
+    pintar();
+    if (reproducir && audio.paused) audio.play().catch(() => {});
+  }
+  window.irA = ir;
+
+  audio.addEventListener('play', () => { iconos(); requestAnimationFrame(bucle); });
+  audio.addEventListener('pause', () => { iconos(); pintar(); });
+  audio.addEventListener('seeked', pintar);
+  audio.addEventListener('ended', () => { iconos(); });
+  $('botonPlay').addEventListener('click', alternar);
+  $('botonGrande').addEventListener('click', alternar);
+  lienzo.addEventListener('click', alternar);
+  barra.addEventListener('input', () => ir(parseFloat(barra.value), false));
+  $('velocidad').addEventListener('change', e => { audio.playbackRate = parseFloat(e.target.value); });
+  $('botonPantalla').addEventListener('click', () => {
+    const el = lienzo.parentElement;
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    else if (el.requestFullscreen) el.requestFullscreen().catch(() => {});
+  });
+  document.addEventListener('fullscreenchange', () => setTimeout(redimensionar, 60));
+  document.querySelector('.reproductor').addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+    if (e.key === ' ' || e.key === 'k') { e.preventDefault(); alternar(); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); ir(audio.currentTime + 5); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); ir(audio.currentTime - 5); }
+  });
+
+  // Capítulos: marcas en la barra y botones.
+  const capNav = $('capitulos');
+  D.capitulos.forEach((c, i) => {
+    const m = document.createElement('span');
+    m.className = 'marca';
+    m.style.left = `calc(${(c.t / D.duracion) * 100}% - 1px)`;
+    $('pista').appendChild(m);
+    const b = document.createElement('button');
+    b.innerHTML = `<span class="mono">${fmt(c.t)}</span>${c.titulo}`;
+    b.addEventListener('click', () => ir(c.t + 0.01, true));
+    capNav.appendChild(b);
+  });
+  function marcarCapitulo(t) {
+    let k = 0;
+    D.capitulos.forEach((c, i) => { if (t >= c.t) k = i; });
+    [...capNav.children].forEach((b, i) => b.setAttribute('aria-current', i === k && iniciado ? 'true' : 'false'));
+  }
+
+  // Transcripción
+  const lista = $('listaTrans');
+  const items = [];
+  const sep = texto => { const d = document.createElement('div'); d.className = 'separador etiqueta'; d.textContent = texto; lista.appendChild(d); };
+  sep('Audio original');
+  D.frases.forEach(f => {
+    const b = document.createElement('button');
+    b.className = 'frase';
+    const texto = f.dudoso ? f.texto.replace('(¿delta?)', '<span class="dudoso" title="Fragmento poco audible">(¿delta?)</span>') : f.texto;
+    b.innerHTML = `<span class="mono">${fmt(f.ini - N)}</span><span>${texto}</span>`;
+    b.addEventListener('click', () => ir(f.ini - 0.05, true));
+    lista.appendChild(b);
+    items.push({ t: f.ini, el: b });
+  });
+  sep('Aclaraciones · voz sintética');
+  D.locuciones.forEach(l => {
+    const b = document.createElement('button');
+    b.className = 'frase sintetica';
+    b.innerHTML = `<span class="mono">${fmt(l.ini)}</span><span>${l.texto}</span>`;
+    b.addEventListener('click', () => ir(l.ini - 0.05, true));
+    lista.appendChild(b);
+    items.push({ t: l.ini, el: b });
+  });
+  let fraseActiva = null;
+  function marcarFrase(t) {
+    let act = null;
+    for (const it of items) if (t >= it.t - 0.1) act = it;
+    if (!iniciado) act = null;
+    if (act === fraseActiva) return;
+    if (fraseActiva) fraseActiva.el.removeAttribute('aria-current');
+    fraseActiva = act;
+    if (act) {
+      act.el.setAttribute('aria-current', 'true');
+      const top = act.el.offsetTop - lista.offsetTop - lista.clientHeight / 2 + act.el.clientHeight / 2;
+      lista.scrollTo({ top, behavior: reducir ? 'auto' : 'smooth' });
+    }
+  }
+
+  document.querySelectorAll('[data-audio]').forEach(b => {
+    b.setAttribute('aria-label', `Escuchar el audio desde ${b.textContent.trim()}`);
+    b.addEventListener('click', () => {
+      ir(parseFloat(b.dataset.audio) + N - 0.1, true);
+      document.querySelector('.reproductor').scrollIntoView({ behavior: reducir ? 'auto' : 'smooth', block: 'start' });
+    });
+  });
+
+  // -------------------------------------------------- bucle de módulos
+  const modulos = [];
+  const visibles = new Set();
+  const io = 'IntersectionObserver' in window ? new IntersectionObserver(ents => {
+    ents.forEach(e => { const m = modulos.find(x => x.canvas === e.target); if (m) { e.isIntersecting ? visibles.add(m) : visibles.delete(m); } });
+  }) : null;
+  function registrar(m) { modulos.push(m); if (io) io.observe(m.canvas); else visibles.add(m); m.dibujar(0); return m; }
+  function despertar(m) { if (m) m.hasta = performance.now() + 1800; }
+  let t0 = performance.now();
+  function bucleModulos(ahora) {
+    const t = (ahora - t0) / 1000;
+    modulos.forEach(m => { if (visibles.has(m) || (m.hasta && m.hasta > ahora)) m.dibujar(t); });
+    requestAnimationFrame(bucleModulos);
+  }
+
+  // ---------------------------------------------- 1. mapa del cuerpo
+  const ZONAS = [
+    { id: 'talamo', nombre: 'Tálamo', texto: 'Estación de relevo hacia la corteza. Los receptores μ reducen la transmisión de la información dolorosa que asciende.', efecto: 'Analgesia supraespinal.' },
+    { id: 'sgpa', nombre: 'Sustancia gris periacueductal', texto: 'Origen de la vía descendente que frena el dolor (SGPA → bulbo rostral ventromedial → médula). Los opioides inhiben interneuronas GABA locales y liberan esa vía.', efecto: 'Analgesia por activación de la inhibición descendente.' },
+    { id: 'atv', nombre: 'Área tegmental ventral', texto: 'Los receptores μ de interneuronas GABA desinhiben a las neuronas de dopamina que proyectan al núcleo accumbens.', efecto: 'Euforia, refuerzo y riesgo de adicción.' },
+    { id: 'lc', nombre: 'Locus coeruleus', texto: 'Núcleo noradrenérgico. Los opioides lo inhiben; al retirarlos bruscamente se hiperactiva, lo que explica parte del síndrome de abstinencia.', efecto: 'Sedación; hiperactividad en la abstinencia.' },
+    { id: 'bulbo', nombre: 'Bulbo raquídeo', texto: 'Los receptores μ del complejo pre‑Bötzinger y otros centros respiratorios reducen la respuesta al CO₂. También actúan en el centro de la tos y en el área postrema.', efecto: 'Depresión respiratoria, efecto antitusivo, náuseas y vómitos.' },
+    { id: 'medula', nombre: 'Médula espinal', texto: 'En el asta dorsal (láminas I–II) hay receptores pre y postsinápticos que frenan la señal que llega desde los nociceptores.', efecto: 'Analgesia espinal; base de la vía epidural e intratecal.' },
+    { id: 'nervio', nombre: 'Nervios periféricos', texto: 'Las terminaciones de las neuronas sensitivas expresan receptores opioides, sobre todo cuando hay inflamación.', efecto: 'Analgesia periférica.' },
+    { id: 'intestino', nombre: 'Intestino', texto: 'En el plexo mientérico, los receptores μ reducen la liberación de acetilcolina y el peristaltismo.', efecto: 'Estreñimiento, sin tolerancia con el uso crónico. La loperamida aprovecha este efecto.' },
+  ];
+  let zona = lsGet('opioides.zona') || 'bulbo';
+  if (!ZONAS.find(z => z.id === zona)) zona = 'bulbo';
+  const cMapa = $('lienzoMapa');
+  ZONAS.forEach(z => {
+    const b = document.createElement('button');
+    b.className = 'opcion'; b.textContent = z.nombre; b.dataset.id = z.id;
+    b.addEventListener('click', () => { zona = z.id; lsSet('opioides.zona', zona); actualizarZona(); despertar(modMapa); });
+    $('opcionesMapa').appendChild(b);
+  });
+  function actualizarZona() {
+    const z = ZONAS.find(x => x.id === zona);
+    $('mapaTitulo').textContent = z.nombre;
+    $('mapaTexto').textContent = z.texto;
+    $('mapaEfecto').textContent = 'Efecto: ' + z.efecto;
+    [...$('opcionesMapa').children].forEach(b => b.setAttribute('aria-pressed', b.dataset.id === zona ? 'true' : 'false'));
+  }
+  actualizarZona();
+  const modMapa = registrar({
+    canvas: cMapa,
+    dibujar(t) {
+      const ctx = preparar(cMapa, 820);
+      fondoMonitor(ctx, 820, 720);
+      const pos = U.dibujarSNC(ctx, 90, 40, 560, { p: 1, periferia: 1, lw: 2.6 });
+      const todas = U.REGIONES.concat(U.PERIFERIA);
+      todas.forEach((r, i) => {
+        const [x, y] = pos[r.id];
+        const sel = r.id === zona;
+        const periferica = U.PERIFERIA.includes(r);
+        if (sel) U.marcaRegion(ctx, x, y, 1, periferica ? P.kappa : P.mu, reducir ? 0 : t, true);
+        else U.punto(ctx, x, y, 6, periferica ? P.kappa : P.accent, 0.75);
+      });
+      const r = todas.find(x => x.id === zona);
+      const [x, y] = pos[zona];
+      const izq = x > 560;
+      U.txt(ctx, ZONAS.find(z => z.id === zona).nombre, izq ? x - 40 : x + 40, y + 8, { family: Fm.mono, size: 22, weight: 600, color: P.ink, align: izq ? 'right' : 'left' });
+      U.txt(ctx, 'Receptores opioides', 30, 700, { family: Fm.mono, size: 17, color: P.dim });
+    },
+  });
+
+  // ---------------------------------------------- 2. moléculas
+  const INFO = {
+    morfina: { clase: 'Natural · alcaloide del opio', papel: 'Agonista completo, sobre todo μ', cambio: 'Referencia: 3‑OH fenólico, 6‑OH, N‑metilo, puente 4,5‑epoxi.', potencia: '1 (referencia)' },
+    codeina: { clase: 'Natural · alcaloide del opio', papel: 'Profármaco: el CYP2D6 la convierte en morfina', cambio: '3‑O‑metil: el fenol queda bloqueado, por eso su afinidad propia es baja.', potencia: '≈ 1/10 de la morfina' },
+    heroina: { clase: 'Semisintético', papel: 'Profármaco muy liposoluble: entra rápido al cerebro y se desacetila a 6‑monoacetilmorfina y morfina', cambio: '3,6‑diacetil.', potencia: '≈ 2 veces la morfina (vía parenteral)' },
+    naloxona: { clase: 'Semisintético', papel: 'Antagonista competitivo (μ > δ, κ)', cambio: 'N‑alilo en lugar de N‑metilo, 14‑OH y 6‑ceto: pequeños cambios que la convierten en antagonista.', potencia: 'No aplica: revierte, no activa' },
+    fentanilo: { clase: 'Sintético · fenilpiperidina', papel: 'Agonista μ completo, muy liposoluble', cambio: 'Otra estructura: sin el esqueleto de morfinano. Conserva un nitrógeno básico y anillos aromáticos.', potencia: '≈ 50–100 veces la morfina' },
+    metadona: { clase: 'Sintético · difenilheptano', papel: 'Agonista μ; además antagonista débil del receptor NMDA', cambio: 'Cadena abierta, sin anillos fusionados. Conserva la amina terciaria.', potencia: 'Variable: la conversión no es lineal' },
+  };
+  const MOLS = {};
+  D.moleculas.forEach(m => { MOLS[m.id] = E.prepararMolecula(m); });
+  let molSel = 'morfina', molDesde = 0;
+  const cMol = $('lienzoMol');
+  D.moleculas.forEach(m => {
+    const b = document.createElement('button');
+    b.className = 'opcion'; b.textContent = m.nombre.split(' (')[0]; b.dataset.id = m.id;
+    b.addEventListener('click', () => { molSel = m.id; molDesde = performance.now(); actualizarMol(); despertar(modMol); });
+    $('opcionesMol').appendChild(b);
+  });
+  function sub(f) { return f.replace(/(\d+)/g, d => `<sub>${d}</sub>`); }
+  function actualizarMol() {
+    const m = D.moleculas.find(x => x.id === molSel), i = INFO[molSel];
+    $('molNombre').textContent = m.nombre;
+    $('molDatos').innerHTML = `
+      <dt>Clase</dt><dd>${i.clase}</dd>
+      <dt>Fórmula</dt><dd>${sub(m.formula)} · ${m.masa.toFixed(2).replace('.', ',')} g/mol</dd>
+      <dt>Acción</dt><dd>${i.papel}</dd>
+      <dt>Estructura</dt><dd>${i.cambio}</dd>
+      <dt>Potencia</dt><dd>${i.potencia}</dd>
+      <dt>InChIKey</dt><dd><span class="mono" style="font-size:13px;word-break:break-all">${m.inchikey}</span><button class="copiar" id="copiarKey">Copiar</button></dd>`;
+    $('copiarKey').addEventListener('click', e => {
+      const btn = e.currentTarget;
+      const ok = () => { btn.textContent = 'Copiado'; setTimeout(() => { btn.textContent = 'Copiar'; }, 1400); };
+      if (navigator.clipboard) navigator.clipboard.writeText(m.inchikey).then(ok).catch(() => { seleccionar(btn.previousElementSibling); });
+      else seleccionar(btn.previousElementSibling);
+    });
+    [...$('opcionesMol').children].forEach(b => b.setAttribute('aria-pressed', b.dataset.id === molSel ? 'true' : 'false'));
+  }
+  function seleccionar(el) { const r = document.createRange(); r.selectNodeContents(el); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+  actualizarMol();
+  const modMol = registrar({
+    canvas: cMol,
+    dibujar() {
+      const ctx = preparar(cMol, 820);
+      fondoMonitor(ctx, 820, 600);
+      const M = MOLS[molSel];
+      const s = Math.min(640 / M.ancho, 470 / M.alto, 74);
+      const p = reducir ? 1 : U.eInOut(U.clamp((performance.now() - molDesde) / 1300));
+      const far = $('verFarmacoforo').checked;
+      U.brillo(ctx, 410, 300, 320, P.accent, 0.25);
+      E.dibujarMolecula(ctx, M, 410, 290, s, {
+        p, color: molSel === 'naloxona' ? P.kappa : P.ink, lw: Math.max(2.4, s * 0.055),
+        anillos: $('verAnillos').checked ? 1 : 0,
+        brillos: far ? [{ atomos: M.grupos.fenol, color: P.kappa, a: 1 }, { atomos: M.grupos.amina, color: P.mu, a: 1, r: 1.3 }] : [],
+      });
+      if (far) {
+        U.punto(ctx, 32, 566, 7, P.kappa); U.txt(ctx, 'fenol', 46, 573, { family: Fm.mono, size: 18, color: P.muted });
+        U.punto(ctx, 140, 566, 7, P.mu); U.txt(ctx, 'nitrógeno básico', 154, 573, { family: Fm.mono, size: 18, color: P.muted });
+      }
+      U.txt(ctx, M.formula.replace(/(\d+)/g, d => d.split('').map(c => '₀₁₂₃₄₅₆₇₈₉'[c]).join('')), 790, 573, { family: Fm.mono, size: 20, color: P.accent, align: 'right' });
+    },
+  });
+
+  ['verAnillos', 'verFarmacoforo'].forEach(id => $(id).addEventListener('change', () => despertar(modMol)));
+
+  // ---------------------------------------------- 3. receptores
+  const RECS = [
+    { id: 'mu', letra: 'μ', nombre: 'mu', clase: 'c-mu', color: P.mu, iuphar: 'MOP', gen: 'OPRM1', origen: 'De <b>m</b>orfina, su agonista prototípico.',
+      ligandos: 'β‑endorfina, endomorfina‑1 y ‑2; las encefalinas con menor afinidad.', donde: 'Tálamo, SGPA, ATV, tronco encefálico, asta dorsal, intestino.',
+      efectos: 'Analgesia supraespinal y espinal, euforia, sedación, depresión respiratoria, miosis, estreñimiento, dependencia física.',
+      farmacos: 'Agonistas: morfina, fentanilo, metadona, oxicodona. Agonista parcial: buprenorfina. Antagonistas: naloxona, naltrexona.' },
+    { id: 'delta', letra: 'δ', nombre: 'delta', clase: 'c-delta', color: P.delta, iuphar: 'DOP', gen: 'OPRD1', origen: 'De <i>vas <b>d</b>eferens</i>: se caracterizó en el conducto deferente del ratón.',
+      ligandos: 'Met‑ y Leu‑encefalina.', donde: 'Corteza, estriado, bulbo olfatorio, asta dorsal.',
+      efectos: 'Analgesia (sobre todo en dolor crónico e inflamatorio) y regulación del estado de ánimo.',
+      farmacos: 'Sin agonistas selectivos aprobados para uso clínico; los hay en investigación.' },
+    { id: 'kappa', letra: 'κ', nombre: 'kappa', clase: 'c-kappa', color: P.kappa, iuphar: 'KOP', gen: 'OPRK1', origen: 'De <b>k</b>etociclazocina, el agonista con el que se describió.',
+      ligandos: 'Dinorfinas.', donde: 'Hipotálamo, claustro, estriado, asta dorsal, nervios periféricos.',
+      efectos: 'Analgesia espinal, disforia, efectos psicotomiméticos, diuresis (inhibe la hormona antidiurética).',
+      farmacos: 'Agonistas‑antagonistas: nalbufina, butorfanol. La salvinorina A (de <i>Salvia divinorum</i>) es un agonista κ natural.' },
+    { id: 'nop', letra: 'NOP', nombre: 'NOP', clase: 'c-nop', color: P.nop, iuphar: 'NOP', gen: 'OPRL1', origen: 'Receptor del péptido nociceptina; antes, «huérfano» ORL1 (<i>opioid receptor‑like 1</i>).',
+      ligandos: 'Nociceptina / orfanina FQ.', donde: 'Amplia distribución en cerebro y médula.',
+      efectos: 'Modula el dolor (efecto distinto según la zona), la ansiedad y la recompensa. La naloxona no lo bloquea.',
+      farmacos: 'Sin fármacos selectivos aprobados; es blanco de investigación.' },
+  ];
+  let recSel = 'mu';
+  const tabs = $('pestanasRec');
+  RECS.forEach(r => {
+    const b = document.createElement('button');
+    b.className = `pestana ${r.clase}`; b.setAttribute('role', 'tab'); b.dataset.id = r.id; b.id = 'tab-' + r.id;
+    b.innerHTML = r.id === 'nop' ? `<span class="nop">NOP</span><span>nociceptina</span><small>${r.gen}</small>` : `<span class="griego">${r.letra}</span><span>${r.nombre}</span><small>${r.iuphar} · ${r.gen}</small>`;
+    b.addEventListener('click', () => { recSel = r.id; actualizarRec(); despertar(modRec); });
+    b.addEventListener('keydown', e => {
+      const i = RECS.findIndex(x => x.id === recSel);
+      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+        e.preventDefault();
+        recSel = RECS[(i + (e.key === 'ArrowRight' ? 1 : RECS.length - 1)) % RECS.length].id;
+        actualizarRec(); $('tab-' + recSel).focus();
+      }
+    });
+    tabs.appendChild(b);
+  });
+  let recDesde = 0;
+  function actualizarRec() {
+    const r = RECS.find(x => x.id === recSel);
+    recDesde = performance.now();
+    [...tabs.children].forEach(b => { const s = b.dataset.id === recSel; b.setAttribute('aria-selected', s ? 'true' : 'false'); b.tabIndex = s ? 0 : -1; });
+    $('recDetalle').setAttribute('aria-labelledby', 'tab-' + recSel);
+    $('recDetalle').innerHTML = `
+      <h3 class="${r.clase}">${r.id === 'nop' ? 'Receptor NOP' : `Receptor <span class="griego">${r.letra}</span> (${r.nombre})`}</h3>
+      <p>${r.origen}</p>
+      <dl class="datos">
+        <dt>IUPHAR</dt><dd>${r.iuphar} · gen ${r.gen}</dd>
+        <dt>Ligandos</dt><dd>${r.ligandos}</dd>
+        <dt>Dónde</dt><dd>${r.donde}</dd>
+        <dt>Efectos</dt><dd>${r.efectos}</dd>
+        <dt>Fármacos</dt><dd>${r.farmacos}</dd>
+        <dt>Acoplado a</dt><dd>Proteínas Gi/o</dd>
+      </dl>`;
+  }
+  actualizarRec();
+  const cRec = $('lienzoRec');
+  const modRec = registrar({
+    canvas: cRec,
+    dibujar(t) {
+      const ctx = preparar(cRec, 820);
+      fondoMonitor(ctx, 820, 560);
+      const r = RECS.find(x => x.id === recSel);
+      const tt = reducir ? 0 : t;
+      U.dibujarMembrana(ctx, 20, 800, 250, 340, [[260, 560]], 1, tt);
+      U.dibujarGPCR(ctx, 410, 250, 340, r.color, 1, 0.95, tt);
+      const f = reducir ? 1 : U.clamp((performance.now() - recDesde) / 900);
+      const y = U.lerp(60, 205, U.eOut(f));
+      U.ligando(ctx, 380, y, 16, 1, tt * 0.5);
+      U.proteinaG(ctx, 440, 450, 0.95, 1, U.eOut(U.clamp(f * 1.4 - 0.4)) * 0.5);
+      U.txt(ctx, 'EXTERIOR', 24, 216, { family: Fm.mono, size: 16, color: P.dim });
+      U.txt(ctx, 'CITOPLASMA', 24, 396, { family: Fm.mono, size: 16, color: P.dim });
+      U.txt(ctx, r.id === 'nop' ? 'NOP' : r.letra, 790, 80, { family: r.id === 'nop' ? Fm.display : Fm.greek, italic: r.id !== 'nop', weight: 700, size: r.id === 'nop' ? 56 : 84, color: r.color, align: 'right' });
+      U.txt(ctx, 'Gi/o activa → ↓ AMPc, ↑ K⁺, ↓ Ca²⁺', 560, 470, { family: Fm.mono, size: 18, color: P.accent, alpha: U.clamp(f * 1.4 - 0.4) });
+      U.txt(ctx, '7 hélices transmembrana', 24, 540, { family: Fm.mono, size: 16, color: P.dim });
+    },
+  });
+
+  // ---------------------------------------------- 4. simulador
+  const cSim = $('lienzoSim');
+  const sim = { v: -70, tRef: 0, hist: [], picos: [], semilla: U.mulberry(5), ultimo: null, vAnt: -70 };
+  const VENT = 3.0, DT = 0.0005;
+  function parametros() {
+    const occ = parseFloat($('ocupacion').value) / 100;
+    const nal = $('naloxona').checked;
+    const efectiva = nal ? occ * 0.08 : occ;
+    return { occ: efectiva, frec: parseFloat($('frecuencia').value), nal, occNominal: occ };
+  }
+  function actualizarSalidas() {
+    const p = parametros();
+    $('salOcup').textContent = `${Math.round(p.occNominal * 100)} %${p.nal ? ' → ' + Math.round(p.occ * 100) + ' % con naloxona' : ''}`;
+    $('salFrec').textContent = `${p.frec} por segundo`;
+    const gK = 0.8 * p.occ;
+    const reposo = (-70 + gK * -90) / (1 + gK);
+    $('lecReposo').textContent = `${reposo.toFixed(0).replace('-', '−')} mV`;
+    $('lecEpsp').textContent = `${(14 * (1 - 0.6 * p.occ)).toFixed(0)} mV`;
+    $('lecLib').textContent = `${Math.round(100 * (1 - 0.6 * p.occ))} %`;
+  }
+  ['ocupacion', 'frecuencia', 'naloxona'].forEach(id => $(id).addEventListener('input', actualizarSalidas));
+  $('naloxona').addEventListener('change', actualizarSalidas);
+  actualizarSalidas();
+  function pasoSim(tFin) {
+    const p = parametros();
+    const gK = 0.8 * p.occ, amp = 14 * (1 - 0.6 * p.occ), tau = 0.02;
+    while (sim.tRef < tFin) {
+      sim.tRef += DT;
+      if (sim.refr > 0) { sim.refr -= DT; if (sim.refr <= 0) sim.v = -76; }
+      else {
+        const dv = (-(sim.v + 70) - gK * (sim.v + 90)) / tau;
+        sim.v += dv * DT;
+        if (sim.semilla() < p.frec * DT) { sim.v += amp; sim.ultimoEpsp = sim.tRef; }
+        if (sim.v >= -55) { sim.picos.push(sim.tRef); sim.v = 30; sim.refr = 0.002; }
+      }
+      if (Math.round(sim.tRef / DT) % 4 === 0) sim.hist.push([sim.tRef, sim.v]);
+    }
+    while (sim.hist.length && sim.hist[0][0] < tFin - VENT) sim.hist.shift();
+    while (sim.picos.length && sim.picos[0] < tFin - VENT) sim.picos.shift();
+  }
+  let simReloj = null;
+  registrar({
+    canvas: cSim,
+    dibujar() {
+      const ahora = performance.now() / 1000;
+      if (simReloj == null) { simReloj = ahora; sim.tRef = 0; pasoSim(VENT); simReloj = ahora - VENT; }
+      const tSim = Math.min(ahora - simReloj, sim.tRef + 0.1);
+      pasoSim(reducir ? sim.tRef + 0.016 : tSim);
+      const ctx = preparar(cSim, 1180);
+      fondoMonitor(ctx, 1180, 440);
+      const p = parametros();
+      // Esquema de sinapsis
+      const sx = 30;
+      ctx.save();
+      ctx.strokeStyle = P.accent; ctx.lineWidth = 2.5; ctx.fillStyle = 'rgba(60,44,96,0.7)';
+      ctx.beginPath(); ctx.moveTo(sx + 20, 30); ctx.lineTo(sx + 20, 150); ctx.quadraticCurveTo(sx + 20, 185, sx + 60, 185); ctx.lineTo(sx + 280, 185); ctx.quadraticCurveTo(sx + 320, 185, sx + 320, 150); ctx.lineTo(sx + 320, 30); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(sx + 20, 410); ctx.lineTo(sx + 20, 275); ctx.quadraticCurveTo(sx + 20, 240, sx + 60, 240); ctx.lineTo(sx + 280, 240); ctx.quadraticCurveTo(sx + 320, 240, sx + 320, 275); ctx.lineTo(sx + 320, 410); ctx.fill(); ctx.stroke();
+      ctx.restore();
+      U.txt(ctx, 'PRESINÁPTICA', sx + 40, 60, { family: Fm.mono, size: 15, color: P.muted });
+      U.txt(ctx, 'POSTSINÁPTICA', sx + 40, 395, { family: Fm.mono, size: 15, color: P.muted });
+      const t = ahora;
+      const abiertoCa = 1 - 0.85 * p.occ, abiertoK = p.occ;
+      const canal = (x, y, ab, col) => { const g = U.lerp(3, 18, ab); U.caja(ctx, x - g / 2 - 16, y - 22, 16, 44, 6, col); U.caja(ctx, x + g / 2, y - 22, 16, 44, 6, col); };
+      canal(sx + 170, 185, abiertoCa, P.ca);
+      canal(sx + 170, 240, abiertoK, P.k);
+      U.txt(ctx, 'Ca²⁺', sx + 170, 150, { family: Fm.mono, size: 16, color: P.ca, align: 'center', weight: 600 });
+      U.txt(ctx, 'K⁺', sx + 170, 290, { family: Fm.mono, size: 16, color: P.k, align: 'center', weight: 600 });
+      for (let k = 0; k < 5; k++) {
+        const q = ((t * 0.9 + k / 5) % 1);
+        U.punto(ctx, sx + 170 + Math.sin(k * 2) * 6, U.lerp(215, 120, q), 5, P.ca, abiertoCa * Math.sin(q * Math.PI));
+        U.punto(ctx, sx + 170 + Math.cos(k * 2) * 6, U.lerp(270, 205, q), 5, P.k, abiertoK * Math.sin(q * Math.PI));
+      }
+      const nLig = Math.round(p.occ * 4);
+      [[sx + 80, 185, true], [sx + 260, 185, true], [sx + 90, 240, false], [sx + 250, 240, false]].forEach(([x, y, pre], i) => {
+        U.receptorMini(ctx, x, y, P.mu, 0.9, !pre);
+        if (i < nLig) U.ligando(ctx, x, pre ? y + 30 : y - 30, 10, 1, t * 0.5 + i);
+      });
+      // Liberación de neurotransmisor ~ proporcional al Ca2+
+      const lib = 1 - 0.6 * p.occ;
+      for (let k = 0; k < 10; k++) {
+        const q = ((t * 0.6 + k / 10) % 1);
+        if (k / 10 > lib) continue;
+        U.punto(ctx, sx + 120 + (k * 37) % 120, U.lerp(190, 236, q), 3.5, P.nt, 0.8 * Math.sin(q * Math.PI));
+      }
+      if (p.nal) U.txt(ctx, 'naloxona en los receptores', sx + 170, 430, { family: Fm.mono, size: 15, color: P.kappa, align: 'center' });
+      // Traza del potencial de membrana
+      const gx = 470, gy = 40, gw = 680, gh = 340;
+      const vmin = -95, vmax = 40, Y = v => gy + gh - (v - vmin) / (vmax - vmin) * gh;
+      const tEnd = sim.tRef, X = tt => gx + (tt - (tEnd - VENT)) / VENT * gw;
+      ctx.strokeStyle = P.line; ctx.lineWidth = 1.2;
+      [[30, '+30', P.dim], [0, '0', P.dim], [-55, '−55 umbral', P.delta], [-70, '−70', P.muted], [-90, '−90 (E K⁺)', P.dim]].forEach(([v, et, c]) => {
+        ctx.save(); if (v === -55) { ctx.setLineDash([8, 7]); ctx.strokeStyle = U.hexA(P.delta, 0.7); }
+        ctx.beginPath(); ctx.moveTo(gx, Y(v)); ctx.lineTo(gx + gw, Y(v)); ctx.stroke(); ctx.restore();
+        U.txt(ctx, et, gx - 10, Y(v) + 5, { family: Fm.mono, size: 14, color: c, align: 'right' });
+      });
+      ctx.save();
+      ctx.strokeStyle = p.occ > 0.02 ? P.drug : P.k; ctx.lineWidth = 2.2; ctx.lineJoin = 'round';
+      ctx.beginPath();
+      sim.hist.forEach(([tt, v], i) => { const x = X(tt), y = Y(v); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+      ctx.stroke(); ctx.restore();
+      U.txt(ctx, 'POTENCIAL DE MEMBRANA · ÚLTIMOS 3 s', gx, 26, { family: Fm.mono, size: 14, color: P.muted });
+      const tasa = sim.picos.length / VENT;
+      $('lecDisparo').textContent = tasa.toFixed(1).replace('.', ',');
+    },
+  });
+
+  // ---------------------------------------------- 5. circuito
+  let conOpioide = false, circDesde = 0;
+  const cCirc = $('lienzoCirc');
+  function actualizarCirc() {
+    $('sinOpi').setAttribute('aria-pressed', conOpioide ? 'false' : 'true');
+    $('conOpi').setAttribute('aria-pressed', conOpioide ? 'true' : 'false');
+    $('circTexto').textContent = conOpioide
+      ? 'El opioide inhibe a la interneurona GABA. Al callar el freno, la neurona de dopamina dispara más y libera más dopamina en el núcleo accumbens: euforia y refuerzo. Deprimir una neurona inhibidora excita el circuito.'
+      : 'En reposo, la interneurona GABA frena a la neurona de dopamina del área tegmental ventral, que dispara a ritmo bajo.';
+    circDesde = performance.now();
+  }
+  $('sinOpi').addEventListener('click', () => { conOpioide = false; actualizarCirc(); despertar(modCirc); });
+  $('conOpi').addEventListener('click', () => { conOpioide = true; actualizarCirc(); despertar(modCirc); });
+  actualizarCirc();
+  const modCirc = registrar({
+    canvas: cCirc,
+    dibujar(t) {
+      const ctx = preparar(cCirc, 1180);
+      fondoMonitor(ctx, 1180, 380);
+      const f = reducir ? 1 : U.eInOut(U.clamp((performance.now() - circDesde) / 900));
+      const k = conOpioide ? f : 1 - f;
+      const nodos = { gaba: [220, 170], da: [600, 170], nac: [980, 170] };
+      const tasaG = U.lerp(8, 1.5, k), tasaD = U.lerp(2.5, 9, k);
+      ctx.strokeStyle = U.hexA(P.ink, 0.55); ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.moveTo(290, 170); ctx.lineTo(522, 170); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(522, 146); ctx.lineTo(522, 194); ctx.stroke();
+      U.flecha(ctx, 672, 170, 906, 170, U.hexA(P.ink, 0.55), 4, 18);
+      const pulsos = (x1, x2, tasa, col) => {
+        for (let q = 0; q < 6; q++) {
+          const fase = ((t * tasa / 6 + q / 6) % 1);
+          if (reducir) continue;
+          U.punto(ctx, U.lerp(x1, x2, fase), 170, 6, col, Math.sin(fase * Math.PI));
+        }
+      };
+      pulsos(292, 516, tasaG, P.k);
+      pulsos(674, 900, tasaD, P.delta);
+      const nodo = ([x, y], r, col, act, a1, a2) => {
+        U.brillo(ctx, x, y, r * 2.2, col, act);
+        U.punto(ctx, x, y, r, U.hexA(col, 0.25 + 0.7 * act));
+        ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+        U.txt(ctx, a1, x, y + r + 38, { size: 24, weight: 700, align: 'center' });
+        U.txt(ctx, a2, x, y + r + 66, { family: Fm.mono, size: 16, color: P.muted, align: 'center' });
+      };
+      nodo(nodos.gaba, 62, P.k, U.lerp(0.9, 0.15, k), 'Interneurona GABA', `${tasaG.toFixed(1).replace('.', ',')} disparos/s`);
+      nodo(nodos.da, 66, P.delta, U.lerp(0.3, 1, k), 'Neurona de dopamina (ATV)', `${tasaD.toFixed(1).replace('.', ',')} disparos/s`);
+      nodo(nodos.nac, 62, P.mu, U.lerp(0.25, 1, k), 'Núcleo accumbens', k > 0.5 ? '↑ dopamina' : 'dopamina basal');
+      U.txt(ctx, 'inhibe (−)', 406, 150, { family: Fm.mono, size: 16, color: P.dim, align: 'center' });
+      U.txt(ctx, 'activa (+)', 790, 150, { family: Fm.mono, size: 16, color: P.dim, align: 'center' });
+      if (k > 0.02) { U.ligando(ctx, 160, 90, 14, k, t * 0.5); U.txt(ctx, 'μ', 204, 102, { family: Fm.greek, italic: true, weight: 700, size: 32, color: P.mu, alpha: k }); }
+      U.txt(ctx, 'Tasas ilustrativas', 1160, 360, { family: Fm.mono, size: 14, color: P.dim, align: 'right' });
+    },
+  });
+
+  // ---------------------------------------------- 6. aclaraciones
+  const tabla = $('tablaAcl');
+  const icono = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z"/></svg>';
+  D.tarjetas.forEach((c, i) => {
+    const fila = document.createElement('div');
+    fila.className = 'fila-acl';
+    fila.innerHTML = `
+      <div class="dijimos"><span class="etiqueta">${i + 1}. ${c.tema}</span><q>${c.dijimos}</q><span class="mono" style="font-size:12.5px;color:var(--muted)">audio ${fmt(c.t_audio)}</span></div>
+      <div><h3>${c.titular}</h3><ul>${c.puntos.map(p => `<li>${p}</li>`).join('')}</ul></div>
+      <div class="acciones">
+        <button class="accion" data-t="${c.t_audio + N - 0.1}">${icono}Escuchar el audio</button>
+        <button class="accion" data-t="${c.t_ini}">${icono}Ver la aclaración</button>
+      </div>`;
+    fila.querySelectorAll('.accion').forEach(b => b.addEventListener('click', () => {
+      ir(parseFloat(b.dataset.t), true);
+      document.querySelector('.reproductor').scrollIntoView({ behavior: reducir ? 'auto' : 'smooth', block: 'start' });
+    }));
+    tabla.appendChild(fila);
+  });
+
+  // ---------------------------------------------- 7. quiz
+  const PREG = [
+    { q: '¿Qué define a una sustancia como opioide?', r: ['Tener el esqueleto de la morfina', 'Actuar sobre los receptores opioides', 'Obtenerse del opio', 'Ser un analgésico'], ok: 1,
+      e: 'Es una definición farmacológica. El fentanilo y la metadona tienen otra estructura y no vienen del opio, pero son opioides.' },
+    { q: '¿A qué proteína G se acoplan los receptores μ, δ y κ?', r: ['Gs (estimuladora)', 'Gq', 'Gi/o (inhibidora)', 'A ninguna: son canales iónicos'], ok: 2,
+      e: 'Gi/o inhibe la adenilato ciclasa (↓ AMPc) y sus subunidades βγ abren canales GIRK y cierran canales de Ca²⁺.' },
+    { q: 'Cuando se abren los canales GIRK, la membrana…', r: ['se despolariza', 'se hiperpolariza', 'no cambia', 'dispara un potencial de acción'], ok: 1,
+      e: 'Sale K⁺ y el potencial se acerca a −90 mV, más lejos del umbral. Por eso cuesta más disparar.' },
+    { q: '¿Qué receptor media sobre todo la depresión respiratoria?', r: ['μ', 'δ', 'κ', 'NOP'], ok: 0,
+      e: 'Los receptores μ del tronco encefálico (complejo pre‑Bötzinger) reducen la respuesta al CO₂.' },
+    { q: '¿Por qué los opioides causan estreñimiento?', r: ['Por deshidratación', 'Porque actúan en receptores del plexo mientérico', 'Porque bloquean la dopamina', 'Solo ocurre en la sobredosis'], ok: 1,
+      e: 'Reducen la acetilcolina y el peristaltismo intestinal. A este efecto casi no se desarrolla tolerancia.' },
+    { q: '¿Qué fármaco revierte una sobredosis de opioides?', r: ['Fentanilo', 'Metadona', 'Naloxona', 'Codeína'], ok: 2,
+      e: 'La naloxona es un antagonista competitivo. Dura menos que muchos opioides: hay que vigilar al paciente.' },
+  ];
+  let aciertos = 0, contestadas = 0;
+  PREG.forEach((p, i) => {
+    const d = document.createElement('div');
+    d.className = 'pregunta';
+    d.innerHTML = `<h3>${i + 1}. ${p.q}</h3><div class="respuestas"></div><p class="explica" hidden></p>`;
+    const cont = d.querySelector('.respuestas');
+    p.r.forEach((txt, j) => {
+      const b = document.createElement('button');
+      b.className = 'resp';
+      b.innerHTML = /^[μδκ]$/.test(txt) ? `<span class="griego" style="font-size:22px">${txt}</span>` : txt;
+      b.addEventListener('click', () => {
+        [...cont.children].forEach((x, k) => { x.disabled = true; if (k === p.ok) x.classList.add('bien'); });
+        if (j !== p.ok) b.classList.add('mal'); else aciertos++;
+        contestadas++;
+        const ex = d.querySelector('.explica');
+        ex.hidden = false;
+        ex.textContent = (j === p.ok ? 'Correcto. ' : 'No exactamente. ') + p.e;
+        $('marcador').textContent = `Aciertos: ${aciertos} de ${PREG.length}${contestadas === PREG.length ? ' · completado' : ''}`;
+      });
+      cont.appendChild(b);
+    });
+    $('preguntas').appendChild(d);
+  });
+
+  // ---------------------------------------------- arranque
+  const fuentes = ['800 100px "Bricolage Grotesque"', '700 40px "Atkinson Hyperlegible"', '400 40px "Atkinson Hyperlegible"',
+    'italic 400 40px "Atkinson Hyperlegible"', 'italic 700 40px "Noto Serif Display"', '400 20px "JetBrains Mono"', '600 20px "JetBrains Mono"'];
+  const listas = document.fonts ? Promise.all(fuentes.map(f => document.fonts.load(f, 'AaÁñμδκ').catch(() => null))) : Promise.resolve();
+  Promise.race([listas, new Promise(r => setTimeout(r, 2500))]).then(() => {
+    redimensionar();
+    modulos.forEach(m => m.dibujar(0));
+  });
+  redimensionar();
+  iconos();
+  window.addEventListener('resize', redimensionar);
+  requestAnimationFrame(bucleModulos);
+})();
+</script>

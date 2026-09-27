@@ -1,0 +1,75 @@
+{
+  "entrada": {
+    "narracion": "Ahora, cinco aclaraciones para precisar lo que acabamos de escuchar."
+  },
+  "tarjetas": [
+    {
+      "id": "ubicacion",
+      "tema": "Dónde están los receptores",
+      "dijimos": "«…en ciertos receptores del cerebro…»",
+      "t_audio": 15.72,
+      "titular": "No solo en el cerebro",
+      "puntos": [
+        "Médula espinal: asta dorsal (láminas I–II)",
+        "Nervios periféricos sensitivos",
+        "Intestino: plexo mientérico → estreñimiento"
+      ],
+      "narracion": "Los receptores opioides no están solo en el cerebro. También están en la médula espinal, en los nervios periféricos y en el intestino; por eso los opioides causan estreñimiento."
+    },
+    {
+      "id": "definicion",
+      "tema": "Qué define a un opioide",
+      "dijimos": "«…una estructura específica… un grupo familiar…»",
+      "t_audio": 28.13,
+      "titular": "Se define por su receptor, no solo por su forma",
+      "puntos": [
+        "Opiáceo: derivado del opio (morfina, codeína)",
+        "Opioide: toda sustancia que actúa en receptores opioides",
+        "Fentanilo y metadona: sintéticos, estructuras distintas"
+      ],
+      "narracion": "Un opioide se define por su acción: se une a los receptores opioides, y su efecto se revierte con naloxona. La morfina y la codeína vienen del opio; el fentanilo y la metadona son sintéticos y tienen estructuras distintas."
+    },
+    {
+      "id": "receptores",
+      "tema": "Los receptores",
+      "dijimos": "«…llamados kappa, mu y (¿delta?)»",
+      "t_audio": 47.4,
+      "titular": "Tres clásicos y un cuarto pariente",
+      "puntos": [
+        "μ (MOP), δ (DOP), κ (KOP) y NOP (nociceptina)",
+        "Todos acoplados a proteínas Gi/o",
+        "μ: analgesia, euforia, depresión respiratoria"
+      ],
+      "narracion": "Hay tres receptores clásicos: mu, delta y kappa, y un cuarto relacionado, el receptor de nociceptina. Todos están acoplados a proteínas G inhibidoras. El receptor mu media la analgesia, la euforia y la depresión respiratoria."
+    },
+    {
+      "id": "potencial",
+      "tema": "El potencial de acción",
+      "dijimos": "«…alterando el potencial de acción…»",
+      "t_audio": 54.57,
+      "titular": "Menos disparos, misma forma",
+      "puntos": [
+        "↑ K⁺ (canales GIRK): hiperpolarización",
+        "↓ Ca²⁺ presináptico: menos neurotransmisor",
+        "↓ AMPc por inhibición de la adenilato ciclasa"
+      ],
+      "narracion": "No cambian la forma del potencial de acción. Abren canales de potasio, que hiperpolarizan la neurona, y cierran canales de calcio, que reducen la liberación de neurotransmisores. Resultado: llegan menos señales de dolor."
+    },
+    {
+      "id": "depresion",
+      "tema": "«Deprimir» el sistema nervioso",
+      "dijimos": "«…deprimiendo el sistema nervioso…»",
+      "t_audio": 57.35,
+      "titular": "Inhiben… y también desinhiben",
+      "puntos": [
+        "Inhiben interneuronas GABA → más dopamina (euforia, adicción)",
+        "Sobredosis: depresión respiratoria, miosis, coma",
+        "Antídoto: naloxona (antagonista competitivo)"
+      ],
+      "narracion": "En conjunto, el efecto es inhibidor, pero en algunos circuitos desinhiben: por ejemplo, liberan a las neuronas de dopamina, lo que explica la euforia y el riesgo de adicción. En una sobredosis, lo más peligroso es la depresión respiratoria, y el antídoto es la naloxona."
+    }
+  ],
+  "cierre": {
+    "narracion": "Recuerda: este material es educativo y no reemplaza la orientación de un profesional de la salud."
+  }
+}
