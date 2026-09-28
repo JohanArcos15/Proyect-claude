@@ -747,19 +747,19 @@
         txt(ctx, '+ intestino', 1660, 722, { size: 26, weight: 700, align: 'center', color: P.kappa });
         ctx.restore();
       } else if (c.id === 'definicion') {
-        const items = [['morfina', 'Opiáceo · natural', 1410, 330, tw('morfina'), P.delta],
-          ['fentanilo', 'Opioide sintético', 1170, 690, tw('fentanilo'), P.kappa],
-          ['metadona', 'Opioide sintético', 1650, 690, tw('metadona'), P.kappa]];
+        const items = [['morfina', 'Opiáceo · natural', 1410, 320, tw('morfina'), P.delta],
+          ['fentanilo', 'Opioide sintético', 1170, 640, tw('fentanilo'), P.kappa],
+          ['metadona', 'Opioide sintético', 1650, 640, tw('metadona'), P.kappa]];
         const fN = prog(t, tw('naloxona') - 0.2, tw('naloxona') + 0.4) + prog(t, c.t_fin_voz - 1.6, c.t_fin_voz - 0.8);
         items.forEach(([id, et, x, y, te, col], i) => {
           const f = eOut(prog(t, te - 0.3, te + 0.5));
           if (f <= 0) return;
           const M = MOL[id];
           ctx.save(); ctx.globalCompositeOperation = 'lighter'; brillo(ctx, x, y, 240, '#6B4FD8', 0.2 * f); ctx.restore();
-          dibujarMol3D(ctx, R, M, { cx: x, cy: y, esc: 30 * lerp(0.7, 1, f), rotY: i * 1.3 + (t - te) * 0.35, rotX: 0.3, alfa: f,
+          dibujarMol3D(ctx, R, M, { cx: x, cy: y, esc: (id === 'morfina' ? 34 : 22) * lerp(0.7, 1, f), rotY: i * 1.3 + (t - te) * 0.35, rotX: 0.3, alfa: f,
             brillos: [{ atomos: M ? M.grupos.amina : [], color: P.mu, a: clamp(fN), r: 4.5 }] });
-          txt(ctx, M ? M.nombre.split(' ')[0] : id, x, y + 175, { family: F.display, size: 32, weight: 700, align: 'center', alpha: f });
-          txt(ctx, et, x, y + 205, { family: F.mono, size: 20, color: col, align: 'center', alpha: f });
+          txt(ctx, M ? M.nombre.split(' ')[0] : id, x, y + 200, { family: F.display, size: 32, weight: 700, align: 'center', alpha: f });
+          txt(ctx, et, x, y + 230, { family: F.mono, size: 20, color: col, align: 'center', alpha: f });
         });
         txt(ctx, 'En común: un nitrógeno básico', 1410, 950 - 60, { family: F.mono, size: 22, color: P.mu, align: 'center', alpha: prog(t, c.t_fin_voz - 1.6, c.t_fin_voz - 0.8) });
       } else if (c.id === 'receptores') {
