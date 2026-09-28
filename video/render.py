@@ -81,6 +81,7 @@ def main():
     ap.add_argument("--muestras", help="tiempos en segundos separados por comas")
     ap.add_argument("--procesos", type=int, default=4)
     ap.add_argument("--version", choices=list(VERSIONES), default="3d")
+    ap.add_argument("--rango", help="vuelve a renderizar solo los segundos ini,fin y recodifica")
     ap.add_argument("--solo-codificar", action="store_true",
                     help="reutiliza build/fotogramas y solo vuelve a unir vídeo y audio")
     args = ap.parse_args()
@@ -120,9 +121,14 @@ def main():
         SALIDA / nombre_mini, quality=92)
 
     n = int(round(duracion * FPS))
-    shutil.rmtree(carpeta, ignore_errors=True)
-    carpeta.mkdir(parents=True)
-    trozos = [list(range(k, n, args.procesos)) for k in range(args.procesos)]
+    if args.rango:
+        ini, fin = (float(x) for x in args.rango.split(","))
+        todos = list(range(max(0, int(ini * FPS)), min(n, int(fin * FPS) + 1)))
+    else:
+        shutil.rmtree(carpeta, ignore_errors=True)
+        carpeta.mkdir(parents=True)
+        todos = list(range(n))
+    trozos = [todos[k::args.procesos] for k in range(args.procesos)]
     with ProcessPoolExecutor(args.procesos) as ex:
         hechos = sum(ex.map(trabajador, [(puerto, tr, str(carpeta), VERSION) for tr in trozos]))
     print(f"{hechos} fotogramas renderizados")

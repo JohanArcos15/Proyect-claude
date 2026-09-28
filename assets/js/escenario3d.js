@@ -747,7 +747,7 @@
         txt(ctx, '+ intestino', 1660, 722, { size: 26, weight: 700, align: 'center', color: P.kappa });
         ctx.restore();
       } else if (c.id === 'definicion') {
-        const items = [['morfina', 'Opiáceo · natural', 1410, 320, tw('morfina'), P.delta],
+        const items = [['morfina', 'Opiáceo · natural', 1410, 320, Math.min(tw('morfina'), c.t_voz + 0.2), P.delta],
           ['fentanilo', 'Opioide sintético', 1170, 640, tw('fentanilo'), P.kappa],
           ['metadona', 'Opioide sintético', 1650, 640, tw('metadona'), P.kappa]];
         const fN = prog(t, tw('naloxona') - 0.2, tw('naloxona') + 0.4) + prog(t, c.t_fin_voz - 1.6, c.t_fin_voz - 0.8);
