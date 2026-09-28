@@ -903,7 +903,7 @@
       if (!reducir && !giroMol.arr && performance.now() - giroMol.ultimo > 2500) giroMol.giro += dt * 0.35;
       let rmax = 0;
       M3.atoms.forEach(a => { rmax = Math.max(rmax, Math.hypot(a.x, a.y, a.z)); });
-      const esc = Math.min(250 / rmax, 62);
+      const esc = Math.min(320 / rmax, 70);
       const p = reducir ? 1 : U.eOut(U.clamp((performance.now() - molDesde) / 900));
       const far = $('verFarmacoforo').checked;
       U.brillo(ctx, 410, 300, 330, '#6B4FD8', 0.3);
@@ -1012,10 +1012,14 @@
         U.caja(ctx, 0, 0, 820, 560, 0, null);
         const g = ctx.createLinearGradient(0, 380, 0, 560); g.addColorStop(0, 'rgba(8,6,16,0)'); g.addColorStop(1, 'rgba(8,6,16,0.85)');
         ctx.fillStyle = g; ctx.fillRect(0, 380, 820, 180);
-        ctx.save(); ctx.strokeStyle = 'rgba(243,238,248,0.7)'; ctx.lineWidth = 1.6;
-        ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(lx - 120, ly - 90); ctx.lineTo(lx - 140, ly - 90); ctx.stroke(); ctx.restore();
+        const der = lx < 420, ex = lx + (der ? 120 : -120), ey = ly - 90;
+        ctx.save(); ctx.strokeStyle = 'rgba(243,238,248,0.8)'; ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(ex, ey); ctx.lineTo(ex + (der ? 20 : -20), ey); ctx.stroke(); ctx.restore();
         U.punto(ctx, lx, ly, 5, P.drug);
-        U.txt(ctx, 'Morfina en el sitio de unión', lx - 150, ly - 84, { size: 20, weight: 700, align: 'right' });
+        const etq = 'Morfina en el sitio de unión', wE = U.medir(ctx, etq, { size: 20, weight: 700 });
+        const x0 = der ? ex + 26 : ex - 26 - wE;
+        U.caja(ctx, x0 - 10, ey - 22, wE + 20, 34, 8, 'rgba(8,6,16,0.8)');
+        U.txt(ctx, etq, x0, ey + 2, { size: 20, weight: 700 });
       }
       U.txt(ctx, r.id === 'nop' ? 'NOP' : r.letra, 790, 80, { family: r.id === 'nop' ? Fm.display : Fm.greek, italic: r.id !== 'nop', weight: 700, size: r.id === 'nop' ? 56 : 84, color: r.color, align: 'right', glow: U.hexA(r.color, 0.5) });
       U.txt(ctx, 'Gi/o activa → ↓ AMPc, ↑ K⁺, ↓ Ca²⁺', 24, 520, { family: Fm.mono, size: 18, color: P.accent });
