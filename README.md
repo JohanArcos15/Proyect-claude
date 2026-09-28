@@ -5,11 +5,12 @@ sobre opioides, más un vídeo listo para YouTube.
 
 | Entregable | Dónde |
 |---|---|
-| Vídeo para YouTube (1080p, 2:47) | `salida/opioides-youtube-1080p.mp4` |
-| Miniatura 1280×720 | `salida/miniatura-youtube.jpg` |
-| Título, descripción con capítulos y etiquetas | `salida/youtube-descripcion.md` |
-| Subtítulos en español | `salida/subtitulos-es.srt` (también `data/subtitulos.vtt`) |
-| Página interactiva | `index.html` |
+| **Vídeo 3D para YouTube** (1080p, 2:47, renders Blender Cycles) | `salida/opioides-3d-youtube-1080p.mp4` |
+| Miniatura 3D 1280×720 | `salida/miniatura-3d-youtube.jpg` |
+| Título, descripción con capítulos y etiquetas (3D) | `salida/youtube-descripcion-3d.md` |
+| Vídeo 2D (primera versión, ilustración vectorial) | `salida/opioides-youtube-1080p.mp4` |
+| Subtítulos en español (válidos para ambas versiones) | `salida/subtitulos-es.srt` (también `data/subtitulos.vtt`) |
+| Página interactiva (reproductor 3D, cerebro y moléculas girables) | `index.html` |
 
 ## Qué dice el audio
 
@@ -58,6 +59,42 @@ poder saltar dentro del audio):
 npx http-server -c-1 .
 # y abre http://127.0.0.1:8080/index.html
 ```
+
+## Versión 3D: cómo se hizo
+
+Renderizar los ~5000 fotogramas con trazado de rayos en CPU llevaría decenas
+de horas, así que se usa la técnica habitual en divulgación científica:
+
+1. **Recursos 3D con Blender Cycles** (`video3d/blender/`, bpy como módulo):
+   - Cerebro humano real: superficie pial *fsaverage5* de FreeSurfer (nilearn),
+     en versión de tejido (dispersión subsuperficial, surcos según la
+     profundidad sulcal real) y de rayos X, en giro de 48° (120 fotogramas).
+     Cerebelo, tronco y médula procedurales en coordenadas MNI.
+   - Bicapa lipídica en corte con un receptor GPCR (7 hélices en cintas con la
+     geometría de la α‑hélice), proteína G heterotrimérica y morfina a escala
+     real en el sitio de unión; 4 variantes de color (μ, δ, κ, NOP).
+   - Sinapsis con vesículas, receptores μ, canal de Ca²⁺ y canal GIRK.
+   - Plano de producto con medicamentos, cápsula de adormidera con látex,
+     red de neuronas con desenfoque de profundidad.
+   - Esferas atómicas fotorrealistas (C, H, O, N) e iones (K⁺, Ca²⁺).
+2. **Moléculas con geometría real** (`video3d/preparar_datos.py`): conformación
+   de mínima energía con RDKit (ETKDGv3 + MMFF94s). El compositor las dibuja
+   átomo a átomo con las esferas de Cycles, ordenadas por profundidad, con
+   sombras de contacto y niebla, así que giran con suavidad a cualquier ángulo.
+3. **Compositor** (`assets/js/escenario3d.js`): movimientos de cámara sobre
+   los renders, cambio de foco, partículas, iones, ligandos, rótulos con
+   líneas guía y subtítulos, sincronizado con la banda sonora.
+
+```bash
+pip install bpy==4.2.0 rdkit nilearn pillow
+python3 video3d/preparar_datos.py          # moléculas 3D y malla del cerebro
+python3 video3d/renderizar_recursos.py     # renders Cycles (≈2 h en 4 núcleos)
+python3 video3d/exportar_web.py            # versiones ligeras para la web
+python3 video/render.py                    # vídeo 3D + miniatura
+```
+
+El receptor es un modelo esquemático de un GPCR de clase A (no una estructura
+cristalográfica) y así se indica en la página.
 
 ## Cómo se construyó (reproducible)
 
