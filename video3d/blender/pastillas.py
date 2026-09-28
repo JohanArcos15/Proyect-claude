@@ -72,7 +72,9 @@ def perla(nombre, pos, rot, color):
 def main():
     spp = int(sys.argv[1]) if len(sys.argv) > 1 else 64
     esc = float(sys.argv[2]) if len(sys.argv) > 2 else 1.0
-    for version, (foco, fstop) in {"fondo": (None, 8.0), "heroe": (None, 1.6)}.items():
+    # Diafragmas a escala: la escena está en centímetros y Blender asume metros,
+    # así que f/0.02 equivale a una macro muy abierta (foco en la cápsula).
+    for version, (foco, fstop) in {"fondo": (None, 0.12), "heroe": (None, 0.02)}.items():
         random.seed(20)
         sc = reiniciar()
         motor(sc, int(ANCHO * esc), int(ALTO * esc), spp=spp, umbral=0.015)
