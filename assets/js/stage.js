@@ -1435,7 +1435,8 @@
     // Utilidades reutilizadas por la página interactiva.
     prepararMolecula, dibujarMolecula, modeloVm, dibujarTraza,
     util: {
-      txt, parrafo, brillo, punto, caja, flecha, hexA, clamp, lerp, prog, eOut, eInOut, mulberry,
+      txt, parrafo, brillo, punto, caja, flecha, hexA, clamp, lerp, prog, eOut, eInOut, eBack, mulberry,
+      lineas, medir, precision,
       dibujarSNC, marcaRegion, REGIONES, PERIFERIA, dibujarMembrana, dibujarGPCR,
       receptorMini, ligando, proteinaG,
     },

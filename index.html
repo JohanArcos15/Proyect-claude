@@ -115,6 +115,11 @@
   .capitulos .mono { font-size: 12px; margin-right: 4px; }
 
   .sub-movil { display: none; }
+  .carga { position: absolute; left: 16px; right: 16px; bottom: 14px; height: 22px; display: flex; align-items: center; gap: 10px; pointer-events: none; }
+  .carga span { flex: 1; height: 4px; border-radius: 2px; background: linear-gradient(90deg, #CDB6FF var(--p, 0%), rgba(243, 238, 248, .18) var(--p, 0%)); }
+  .carga em { font: 600 12px/1 var(--mono); font-style: normal; color: #CDB6FF; letter-spacing: .08em; white-space: nowrap; }
+  .monitor canvas.girable { cursor: grab; touch-action: pan-y; }
+  .monitor canvas.girable:active { cursor: grabbing; }
   .transcripcion {
     background: var(--surface); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow);
     display: flex; flex-direction: column; max-height: min(78vh, 640px);
@@ -244,6 +249,11 @@
   @media (max-width: 980px) {
     .reproductor { grid-template-columns: minmax(0, 1fr); }
     .sub-movil { display: none; }
+  .carga { position: absolute; left: 16px; right: 16px; bottom: 14px; height: 22px; display: flex; align-items: center; gap: 10px; pointer-events: none; }
+  .carga span { flex: 1; height: 4px; border-radius: 2px; background: linear-gradient(90deg, #CDB6FF var(--p, 0%), rgba(243, 238, 248, .18) var(--p, 0%)); }
+  .carga em { font: 600 12px/1 var(--mono); font-style: normal; color: #CDB6FF; letter-spacing: .08em; white-space: nowrap; }
+  .monitor canvas.girable { cursor: grab; touch-action: pan-y; }
+  .monitor canvas.girable:active { cursor: grabbing; }
   .transcripcion { max-height: 380px; }
     .dos { grid-template-columns: minmax(0, 1fr); }
     .fila-acl { grid-template-columns: minmax(0, 1fr); }
@@ -276,10 +286,11 @@
   <header class="cabecera">
     <span class="etiqueta">Clase animada · Farmacología</span>
     <h1>Opioides</h1>
-    <p class="lede">Un audio de 64 segundos explica qué son los opioides, dónde actúan y cómo. Aquí lo ves animado y sincronizado, lo exploras pieza a pieza y lo precisamos con rigor donde hace falta.</p>
+    <p class="lede">Un audio de 64 segundos explica qué son los opioides, dónde actúan y cómo. Aquí lo ves en 3D y sincronizado, lo exploras pieza a pieza y lo precisamos con rigor donde hace falta.</p>
     <div class="fichas">
       <span class="ficha">Narración original <b>1:04</b></span>
       <span class="ficha">Aclaraciones <b>5</b></span>
+      <span class="ficha">Render <b>3D · Blender Cycles</b></span>
       <span class="ficha">Receptores <b class="griego c-mu">μ</b><b class="griego c-delta">δ</b><b class="griego c-kappa">κ</b> <b>NOP</b></span>
     </div>
   </header>
@@ -287,7 +298,8 @@
   <section class="reproductor" aria-label="Animación sincronizada con el audio">
     <div>
       <div class="pantalla">
-        <canvas id="escenario" width="1280" height="720" aria-label="Animación de la clase sobre opioides"></canvas>
+        <canvas id="escenario" width="1280" height="720" aria-label="Animación 3D de la clase sobre opioides"></canvas>
+        <div class="carga" id="carga" aria-live="polite"><span id="cargaBarra"></span><em id="cargaTexto">Cargando escenas 3D</em></div>
         <button class="boton-grande" id="botonGrande" aria-label="Reproducir la animación">
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z"/></svg>
         </button>
@@ -334,7 +346,7 @@
         <p class="cita">«…actúa sobre el sistema nervioso, en ciertos receptores del cerebro…»</p>
       </div>
       <div class="dos">
-        <div class="monitor"><canvas id="lienzoMapa" width="820" height="720" aria-label="Mapa del sistema nervioso con la región seleccionada"></canvas></div>
+        <div class="monitor"><canvas id="lienzoMapa" width="820" height="720" aria-label="Cerebro humano en 3D con la región seleccionada; arrastra para girarlo"></canvas></div>
         <div class="detalle">
           <span class="etiqueta">Elige una zona</span>
           <div class="opciones" id="opcionesMapa" role="group" aria-label="Zonas con receptores opioides"></div>
@@ -358,15 +370,16 @@
       </div>
       <div class="opciones" id="opcionesMol" role="group" aria-label="Moléculas"></div>
       <div class="dos">
-        <div class="monitor"><canvas id="lienzoMol" width="820" height="600" aria-label="Estructura química de la molécula seleccionada"></canvas></div>
+        <div class="monitor"><canvas id="lienzoMol" width="820" height="600" aria-label="Modelo 3D de bolas y varillas de la molécula seleccionada; arrastra para girarlo"></canvas></div>
         <div class="detalle">
           <h3 id="molNombre"></h3>
           <dl class="datos" id="molDatos"></dl>
           <div class="interruptores">
             <label><input type="checkbox" id="verAnillos"> Resaltar anillos</label>
             <label><input type="checkbox" id="verFarmacoforo" checked> Resaltar farmacóforo</label>
+            <label><input type="checkbox" id="verH" checked> Hidrógenos</label>
           </div>
-          <p class="nota-modelo">Estructuras 2D generadas con RDKit a partir de SMILES isoméricos y verificadas por fórmula e InChIKey. Cuñas: enlace hacia el observador; líneas discontinuas: hacia atrás.</p>
+          <p class="nota-modelo">Geometría 3D real: conformación de mínima energía (RDKit ETKDGv3 + campo de fuerzas MMFF94s) a partir de SMILES isoméricos verificados por fórmula e InChIKey. Colores CPK: carbono gris, oxígeno rojo, nitrógeno azul, hidrógeno blanco.</p>
         </div>
       </div>
       <div class="precision">
@@ -390,7 +403,7 @@
       <div class="pestanas" role="tablist" id="pestanasRec"></div>
       <div class="dos">
         <div class="detalle" id="recDetalle" role="tabpanel"></div>
-        <div class="monitor"><canvas id="lienzoRec" width="820" height="560" aria-label="Receptor acoplado a proteína G en la membrana"></canvas></div>
+        <div class="monitor"><canvas id="lienzoRec" width="820" height="560" aria-label="Render 3D del receptor en la bicapa lipídica, coloreado según el receptor elegido"></canvas></div>
       </div>
       <div class="dos">
         <div class="precision">
@@ -523,11 +536,13 @@
   <footer>
     <p>Contenido educativo. No sustituye la orientación de un profesional de la salud.</p>
     <p>Narración: audio original. Voz de las aclaraciones: síntesis Piper (es‑MX, Apache‑2.0). Música: generada para este proyecto.</p>
+    <p>Imágenes 3D renderizadas con Blender Cycles. Cerebro: superficie cortical fsaverage de FreeSurfer (vía nilearn). Moléculas: RDKit, conformaciones MMFF94s.</p>
   </footer>
 </div>
 
 <script src="assets/js/datos.js"></script>
 <script src="assets/js/stage.js"></script>
+<script src="assets/js/escenario3d.js"></script>
 <script>
 (function () {
   'use strict';
@@ -565,7 +580,7 @@
   // ---------------------------------------------------------- reproductor
   const audio = $('banda');
   const lienzo = $('escenario');
-  const esc = E.crear(lienzo, D);
+  let esc = null, R3 = null;
   let iniciado = false;
   const POSTER = 4.3;
   const barra = $('barra');
@@ -609,9 +624,18 @@
       el.appendChild(sp);
     });
   }
+  function pantallaCarga() {
+    const k = lienzo.width / 1920, c = lienzo.getContext('2d');
+    c.setTransform(k, 0, 0, k, 0, 0);
+    const g = c.createRadialGradient(1200, 380, 30, 960, 540, 1500);
+    g.addColorStop(0, '#241838'); g.addColorStop(1, '#06050B');
+    c.fillStyle = g; c.fillRect(0, 0, 1920, 1080);
+    U.txt(c, 'Opioides', 150, 560, { family: Fm.display, size: 250, weight: 800, stretch: 'condensed', color: '#F3EEF8' });
+    U.txt(c, 'Cargando escenas 3D…', 156, 650, { size: 44, color: '#A99FC0' });
+  }
   function pintar() {
     const t = tActual();
-    esc.dibujar(t);
+    if (esc) esc.dibujar(t); else pantallaCarga();
     subtituloMovil(t);
     barra.value = iniciado ? t : 0;
     $('tiempo').textContent = `${fmt(iniciado ? t : 0)} / ${fmt(D.duracion)}`;
@@ -724,6 +748,25 @@
 
   // -------------------------------------------------- bucle de módulos
   const modulos = [];
+  let MOL3 = null;
+  // Giro con el puntero (arrastre horizontal/vertical) para visores 3D
+  function girable(canvas, estado, modulo) {
+    canvas.classList.add('girable');
+    canvas.addEventListener('pointerdown', e => { estado.arr = { x: e.clientX, y: e.clientY, g: estado.giro, i: estado.incl }; canvas.setPointerCapture(e.pointerId); despertar(modulo()); });
+    canvas.addEventListener('pointermove', e => {
+      if (!estado.arr) return;
+      const w = canvas.getBoundingClientRect().width;
+      estado.giro = estado.arr.g + (e.clientX - estado.arr.x) / w * estado.sens;
+      if (estado.incl != null) estado.incl = U.clamp(estado.arr.i + (e.clientY - estado.arr.y) / w * 3, -1.3, 1.3);
+      if (estado.min != null) estado.giro = U.clamp(estado.giro, estado.min, estado.max);
+      estado.ultimo = performance.now();
+      despertar(modulo());
+    });
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(ev => canvas.addEventListener(ev, () => { estado.arr = null; }));
+  }
+  function cargandoMonitor(ctx, w, h) {
+    U.txt(ctx, 'Cargando render 3D…', w / 2, h / 2, { family: Fm.mono, size: 22, color: P.muted, align: 'center' });
+  }
   const visibles = new Set();
   const io = 'IntersectionObserver' in window ? new IntersectionObserver(ents => {
     ents.forEach(e => { const m = modulos.find(x => x.canvas === e.target); if (m) { e.isIntersecting ? visibles.add(m) : visibles.delete(m); } });
@@ -765,27 +808,48 @@
     [...$('opcionesMapa').children].forEach(b => b.setAttribute('aria-pressed', b.dataset.id === zona ? 'true' : 'false'));
   }
   actualizarZona();
+  const giroMapa = { giro: 0.5, sens: 1.3, min: 0, max: 1, dir: 1, ultimo: 0, tPrev: 0 };
+  const REG3 = ['talamo', 'sgpa', 'atv', 'lc', 'bulbo', 'medula'];
   const modMapa = registrar({
     canvas: cMapa,
     dibujar(t) {
       const ctx = preparar(cMapa, 820);
       fondoMonitor(ctx, 820, 720);
-      const pos = U.dibujarSNC(ctx, 90, 40, 560, { p: 1, periferia: 1, lw: 2.6 });
-      const todas = U.REGIONES.concat(U.PERIFERIA);
-      todas.forEach((r, i) => {
-        const [x, y] = pos[r.id];
-        const sel = r.id === zona;
-        const periferica = U.PERIFERIA.includes(r);
-        if (sel) U.marcaRegion(ctx, x, y, 1, periferica ? P.kappa : P.mu, reducir ? 0 : t, true);
-        else U.punto(ctx, x, y, 6, periferica ? P.kappa : P.accent, 0.75);
+      if (!R3 || !R3.meta.cerebro_rayosx) { cargandoMonitor(ctx, 820, 720); return; }
+      const m = R3.meta.cerebro_rayosx, n = m.n;
+      const dt = Math.min(0.1, Math.max(0, t - giroMapa.tPrev)); giroMapa.tPrev = t;
+      if (!reducir && !giroMapa.arr && performance.now() - giroMapa.ultimo > 3500) {
+        giroMapa.giro += dt * 0.05 * giroMapa.dir;
+        if (giroMapa.giro > 0.95 || giroMapa.giro < 0.05) giroMapa.dir *= -1;
+      }
+      const u = U.clamp(giroMapa.giro, 0, 1) * (n - 1);
+      const bx = -20, by = -10, bw = 860, bh = 726;
+      U.brillo(ctx, 400, 320, 380, '#3D6BFF', 0.25);
+      Escenario3D.secuencia(ctx, R3.seq.cerebro_rayosx, u, bx, by, bw, bh);
+      const i0 = Math.floor(u), i1 = Math.min(n - 1, i0 + 1), f = u - i0;
+      const pos = {};
+      REG3.forEach((k, j) => { const a = m.proyecciones[i0][j], b = m.proyecciones[i1][j]; pos[k] = [bx + U.lerp(a[0], b[0], f) * bw, by + U.lerp(a[1], b[1], f) * bh]; });
+      const fuera = zona === 'nervio' || zona === 'intestino';
+      REG3.forEach((k, i) => {
+        const [x, y] = pos[k];
+        const sel = k === zona || (fuera && k === 'medula');
+        const col = k === 'medula' ? P.kappa : P.mu;
+        if (sel) U.marcaRegion(ctx, x, y, 1, col, reducir ? 0 : t, true);
+        else U.punto(ctx, x, y, 6, k === 'medula' ? P.kappa : '#C9A8FF', 0.8);
       });
-      const r = todas.find(x => x.id === zona);
-      const [x, y] = pos[zona];
-      const izq = x > 560;
-      U.txt(ctx, ZONAS.find(z => z.id === zona).nombre, izq ? x - 40 : x + 40, y + 8, { family: Fm.mono, size: 22, weight: 600, color: P.ink, align: izq ? 'right' : 'left' });
-      U.txt(ctx, 'Receptores opioides', 30, 700, { family: Fm.mono, size: 17, color: P.dim });
+      if (!fuera) {
+        const [x, y] = pos[zona];
+        const izq = x > 470;
+        U.txt(ctx, ZONAS.find(z => z.id === zona).nombre, izq ? x - 36 : x + 36, y + 8, { family: Fm.mono, size: 22, weight: 600, color: P.ink, align: izq ? 'right' : 'left' });
+      } else {
+        U.caja(ctx, 440, 560, 360, 92, 16, 'rgba(12,9,22,0.85)', U.hexA(P.kappa, 0.8), 2);
+        U.txt(ctx, ZONAS.find(z => z.id === zona).nombre, 460, 598, { size: 24, weight: 700, color: P.kappa });
+        U.txt(ctx, 'fuera del sistema nervioso central', 460, 628, { family: Fm.mono, size: 15, color: P.muted });
+      }
+      U.txt(ctx, 'Arrastra para girar · cerebro real (FreeSurfer)', 24, 700, { family: Fm.mono, size: 16, color: P.dim });
     },
   });
+  girable(cMapa, giroMapa, () => modMapa);
 
   // ---------------------------------------------- 2. moléculas
   const INFO = {
@@ -827,30 +891,41 @@
   }
   function seleccionar(el) { const r = document.createRange(); r.selectNodeContents(el); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
   actualizarMol();
+  const giroMol = { giro: -0.6, incl: 0.3, sens: 6, ultimo: 0, tPrev: 0 };
   const modMol = registrar({
     canvas: cMol,
-    dibujar() {
+    dibujar(t) {
       const ctx = preparar(cMol, 820);
       fondoMonitor(ctx, 820, 600);
-      const M = MOLS[molSel];
-      const s = Math.min(640 / M.ancho, 470 / M.alto, 74);
-      const p = reducir ? 1 : U.eInOut(U.clamp((performance.now() - molDesde) / 1300));
+      const M3 = MOL3 && MOL3[molSel];
+      if (!M3 || !R3.img.atomo_C) { cargandoMonitor(ctx, 820, 600); return; }
+      const dt = Math.min(0.1, Math.max(0, t - giroMol.tPrev)); giroMol.tPrev = t;
+      if (!reducir && !giroMol.arr && performance.now() - giroMol.ultimo > 2500) giroMol.giro += dt * 0.35;
+      let rmax = 0;
+      M3.atoms.forEach(a => { rmax = Math.max(rmax, Math.hypot(a.x, a.y, a.z)); });
+      const esc = Math.min(250 / rmax, 62);
+      const p = reducir ? 1 : U.eOut(U.clamp((performance.now() - molDesde) / 900));
       const far = $('verFarmacoforo').checked;
-      U.brillo(ctx, 410, 300, 320, P.accent, 0.25);
-      E.dibujarMolecula(ctx, M, 410, 290, s, {
-        p, color: molSel === 'naloxona' ? P.kappa : P.ink, lw: Math.max(2.4, s * 0.055),
-        anillos: $('verAnillos').checked ? 1 : 0,
-        brillos: far ? [{ atomos: M.grupos.fenol, color: P.kappa, a: 1 }, { atomos: M.grupos.amina, color: P.mu, a: 1, r: 1.3 }] : [],
+      U.brillo(ctx, 410, 300, 330, '#6B4FD8', 0.3);
+      Escenario3D.dibujarMol3D(ctx, R3, M3, {
+        cx: 410, cy: 300, esc: esc * U.lerp(0.8, 1, p), rotY: giroMol.giro, rotX: giroMol.incl, alfa: p,
+        anillos: $('verAnillos').checked ? 1 : 0, sinH: !$('verH').checked,
+        brillos: far ? [{ atomos: M3.grupos.fenol, color: P.kappa, a: 1 }, { atomos: M3.grupos.amina, color: P.mu, a: 1, r: 4 }] : [],
       });
+      U.caja(ctx, 620, 16, 184, 150, 12, 'rgba(12,9,22,0.7)', 'rgba(205,182,255,0.25)', 1);
+      E.dibujarMolecula(ctx, MOLS[molSel], 712, 88, Math.min(15, 150 / MOLS[molSel].ancho), { color: P.ink, lw: 1.4 });
+      U.txt(ctx, 'fórmula 2D', 712, 158, { family: Fm.mono, size: 12, color: P.dim, align: 'center' });
       if (far) {
         U.punto(ctx, 32, 566, 7, P.kappa); U.txt(ctx, 'fenol', 46, 573, { family: Fm.mono, size: 18, color: P.muted });
         U.punto(ctx, 140, 566, 7, P.mu); U.txt(ctx, 'nitrógeno básico', 154, 573, { family: Fm.mono, size: 18, color: P.muted });
       }
-      U.txt(ctx, M.formula.replace(/(\d+)/g, d => d.split('').map(c => '₀₁₂₃₄₅₆₇₈₉'[c]).join('')), 790, 573, { family: Fm.mono, size: 20, color: P.accent, align: 'right' });
+      U.txt(ctx, 'Arrastra para girar', 24, 36, { family: Fm.mono, size: 16, color: P.dim });
+      U.txt(ctx, M3.formula.replace(/(\d+)/g, d => d.split('').map(c => '₀₁₂₃₄₅₆₇₈₉'[c]).join('')), 790, 573, { family: Fm.mono, size: 20, color: P.accent, align: 'right' });
     },
   });
+  girable(cMol, giroMol, () => modMol);
 
-  ['verAnillos', 'verFarmacoforo'].forEach(id => $(id).addEventListener('change', () => despertar(modMol)));
+  ['verAnillos', 'verFarmacoforo', 'verH'].forEach(id => $(id).addEventListener('change', () => despertar(modMol)));
 
   // ---------------------------------------------- 3. receptores
   const RECS = [
@@ -908,24 +983,43 @@
   }
   actualizarRec();
   const cRec = $('lienzoRec');
+  let recPrevio = 'mu';
   const modRec = registrar({
     canvas: cRec,
     dibujar(t) {
       const ctx = preparar(cRec, 820);
       fondoMonitor(ctx, 820, 560);
       const r = RECS.find(x => x.id === recSel);
-      const tt = reducir ? 0 : t;
-      U.dibujarMembrana(ctx, 20, 800, 250, 340, [[260, 560]], 1, tt);
-      U.dibujarGPCR(ctx, 410, 250, 340, r.color, 1, 0.95, tt);
-      const f = reducir ? 1 : U.clamp((performance.now() - recDesde) / 900);
-      const y = U.lerp(60, 205, U.eOut(f));
-      U.ligando(ctx, 380, y, 16, 1, tt * 0.5);
-      U.proteinaG(ctx, 440, 450, 0.95, 1, U.eOut(U.clamp(f * 1.4 - 0.4)) * 0.5);
-      U.txt(ctx, 'EXTERIOR', 24, 216, { family: Fm.mono, size: 16, color: P.dim });
-      U.txt(ctx, 'CITOPLASMA', 24, 396, { family: Fm.mono, size: 16, color: P.dim });
-      U.txt(ctx, r.id === 'nop' ? 'NOP' : r.letra, 790, 80, { family: r.id === 'nop' ? Fm.display : Fm.greek, italic: r.id !== 'nop', weight: 700, size: r.id === 'nop' ? 56 : 84, color: r.color, align: 'right' });
-      U.txt(ctx, 'Gi/o activa → ↓ AMPc, ↑ K⁺, ↓ Ca²⁺', 560, 470, { family: Fm.mono, size: 18, color: P.accent, alpha: U.clamp(f * 1.4 - 0.4) });
-      U.txt(ctx, '7 hélices transmembrana', 24, 540, { family: Fm.mono, size: 16, color: P.dim });
+      const mm = R3 && R3.meta.membrana;
+      if (!mm) { cargandoMonitor(ctx, 820, 560); return; }
+      const f = reducir ? 1 : U.clamp((performance.now() - recDesde) / 600);
+      const zoom = 1.9 + (reducir ? 0 : 0.06 * Math.sin(t * 0.2));
+      const recorte = (im, alfa) => {
+        if (!im) return;
+        const sw = im.width / zoom, sh = sw * 560 / 820;
+        const sx = U.clamp(mm.bolsillo[0] * im.width - sw * 0.5, 0, im.width - sw);
+        const sy = U.clamp(mm.bolsillo[1] * im.height - sh * 0.42, 0, im.height - sh);
+        ctx.save(); ctx.globalAlpha = alfa; ctx.drawImage(im, sx, sy, sw, sh, 0, 0, 820, 560); ctx.restore();
+        return [sx, sy, sw, sh];
+      };
+      if (f < 1) recorte(R3.img['membrana_' + recPrevio], 1);
+      const caja = recorte(R3.img['membrana_' + recSel], f);
+      if (f >= 1) recPrevio = recSel;
+      if (caja) {
+        const im = R3.img['membrana_' + recSel];
+        const aP = (nx, ny) => [(nx * im.width - caja[0]) / caja[2] * 820, (ny * im.height - caja[1]) / caja[3] * 560];
+        const [lx, ly] = aP(mm.bolsillo[0], mm.bolsillo[1]);
+        U.caja(ctx, 0, 0, 820, 560, 0, null);
+        const g = ctx.createLinearGradient(0, 380, 0, 560); g.addColorStop(0, 'rgba(8,6,16,0)'); g.addColorStop(1, 'rgba(8,6,16,0.85)');
+        ctx.fillStyle = g; ctx.fillRect(0, 380, 820, 180);
+        ctx.save(); ctx.strokeStyle = 'rgba(243,238,248,0.7)'; ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(lx - 120, ly - 90); ctx.lineTo(lx - 140, ly - 90); ctx.stroke(); ctx.restore();
+        U.punto(ctx, lx, ly, 5, P.drug);
+        U.txt(ctx, 'Morfina en el sitio de unión', lx - 150, ly - 84, { size: 20, weight: 700, align: 'right' });
+      }
+      U.txt(ctx, r.id === 'nop' ? 'NOP' : r.letra, 790, 80, { family: r.id === 'nop' ? Fm.display : Fm.greek, italic: r.id !== 'nop', weight: 700, size: r.id === 'nop' ? 56 : 84, color: r.color, align: 'right', glow: U.hexA(r.color, 0.5) });
+      U.txt(ctx, 'Gi/o activa → ↓ AMPc, ↑ K⁺, ↓ Ca²⁺', 24, 520, { family: Fm.mono, size: 18, color: P.accent });
+      U.txt(ctx, 'Render Cycles · modelo esquemático de GPCR', 24, 545, { family: Fm.mono, size: 14, color: P.dim });
     },
   });
 
@@ -1154,6 +1248,24 @@
   Promise.race([listas, new Promise(r => setTimeout(r, 2500))]).then(() => {
     redimensionar();
     modulos.forEach(m => m.dibujar(0));
+  });
+  Escenario3D.cargar('assets/3d-web/', {
+    esperar: false,
+    pasoSecuencias: 1,
+    alProgreso: f => {
+      $('carga').style.setProperty('--p', Math.round(f * 100) + '%');
+      $('cargaTexto').textContent = f < 1 ? `Cargando escenas 3D · ${Math.round(f * 100)} %` : 'Listo';
+      if (f >= 1) setTimeout(() => { $('carga').hidden = true; }, 600);
+      if (audio.paused) pintar();
+    },
+  }).then(R => {
+    R3 = R;
+    MOL3 = {};
+    (R.mol3d || []).forEach(m => { const d2 = D.moleculas.find(x => x.id === m.id); MOL3[m.id] = Escenario3D.prepararMol3D(m, d2 ? d2.anillos : []); });
+    esc = Escenario3D.crear(lienzo, D, R);
+    pintar();
+    modulos.forEach(despertar);
+    R.listo.then(() => { pintar(); modulos.forEach(despertar); });
   });
   redimensionar();
   iconos();

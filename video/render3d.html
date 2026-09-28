@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Render del vídeo 3D · Opioides</title>
+<link rel="stylesheet" href="../assets/fonts/fonts.css">
+<style>html, body { margin: 0; background: #000; } canvas { display: block; }</style>
+</head>
+<body>
+<canvas id="lienzo" width="1920" height="1080"></canvas>
+<script src="../assets/js/datos.js"></script>
+<script src="../assets/js/stage.js"></script>
+<script src="../assets/js/escenario3d.js"></script>
+<script>
+(async () => {
+  const muestras = [
+    '800 100px "Bricolage Grotesque"', '700 40px "Atkinson Hyperlegible"',
+    '400 40px "Atkinson Hyperlegible"', 'italic 400 40px "Atkinson Hyperlegible"',
+    'italic 700 40px "Noto Serif Display"', '400 20px "JetBrains Mono"', '600 20px "JetBrains Mono"',
+  ];
+  await Promise.all(muestras.map(f => document.fonts.load(f, 'AaÁñμδκ')));
+  await document.fonts.ready;
+  const recursos = await Escenario3D.cargar('../assets/3d/');
+  // Decodifica todo antes de empezar para que ningún fotograma salga incompleto
+  const todas = [...Object.values(recursos.img), ...Object.values(recursos.seq).flat()].filter(Boolean);
+  await Promise.all(todas.map(im => im.decode ? im.decode().catch(() => {}) : null));
+  const esc = Escenario3D.crear(document.getElementById('lienzo'), window.DATOS, recursos);
+  window.renderAt = t => esc.dibujar(t);
+  window.miniatura = () => esc.miniatura();
+  window.duracion = esc.duracion;
+  window.faltan = todas.length;
+  window.listo = true;
+})();
+</script>
+</body>
+</html>

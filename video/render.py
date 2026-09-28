@@ -4,8 +4,9 @@ Recorre stage.js fotograma a fotograma en Chromium headless (Playwright),
 guarda JPEG de alta calidad y los une con la banda sonora usando ffmpeg.
 
 Uso:
-  python3 video/render.py                    # vídeo completo + miniatura
+  python3 video/render.py                    # vídeo 3D completo + miniatura
   python3 video/render.py --muestras 3,30,90 # solo fotogramas sueltos (PNG)
+  python3 video/render.py --version 2d       # versión 2D original
 """
 import argparse
 import functools
@@ -47,16 +48,24 @@ def servidor():
     return srv
 
 
+VERSIONES = {
+    "3d": ("render3d.html", "opioides-3d-youtube-1080p.mp4", "miniatura-3d-youtube.jpg", "fotogramas3d"),
+    "2d": ("render.html", "opioides-youtube-1080p.mp4", "miniatura-youtube.jpg", "fotogramas"),
+}
+VERSION = "3d"
+
+
 def abrir(p, puerto):
     nav = p.chromium.launch(executable_path=chromium(), args=["--disable-gpu", "--font-render-hinting=none"])
     pag = nav.new_page(viewport={"width": 1920, "height": 1080}, device_scale_factor=1)
-    pag.goto(f"http://127.0.0.1:{puerto}/video/render.html")
-    pag.wait_for_function("window.listo === true", timeout=60000)
+    pag.goto(f"http://127.0.0.1:{puerto}/video/{VERSIONES[VERSION][0]}")
+    pag.wait_for_function("window.listo === true", timeout=300000)
     return nav, pag
 
 
 def trabajador(args):
-    puerto, indices, carpeta = args
+    global VERSION
+    puerto, indices, carpeta, VERSION = args
     with sync_playwright() as p:
         nav, pag = abrir(p, puerto)
         for i in indices:
@@ -71,14 +80,18 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--muestras", help="tiempos en segundos separados por comas")
     ap.add_argument("--procesos", type=int, default=4)
+    ap.add_argument("--version", choices=list(VERSIONES), default="3d")
     ap.add_argument("--solo-codificar", action="store_true",
                     help="reutiliza build/fotogramas y solo vuelve a unir vídeo y audio")
     args = ap.parse_args()
+    global VERSION
+    VERSION = args.version
+    _, nombre_mp4, nombre_mini, nombre_carpeta = VERSIONES[VERSION]
     srv = servidor()
     puerto = srv.server_address[1]
 
     if args.muestras:
-        destino = BUILD / "muestras"
+        destino = BUILD / ("muestras" + ("3d" if VERSION == "3d" else ""))
         destino.mkdir(parents=True, exist_ok=True)
         with sync_playwright() as p:
             nav, pag = abrir(p, puerto)
@@ -89,9 +102,9 @@ def main():
         print("Muestras en", destino)
         return
 
-    carpeta = BUILD / "fotogramas"
+    carpeta = BUILD / nombre_carpeta
     if args.solo_codificar:
-        codificar(carpeta)
+        codificar(carpeta, nombre_mp4)
         return
 
     with sync_playwright() as p:
@@ -104,20 +117,20 @@ def main():
     from PIL import Image
     SALIDA.mkdir(exist_ok=True)
     Image.open(BUILD / "miniatura.png").convert("RGB").resize((1280, 720), Image.LANCZOS).save(
-        SALIDA / "miniatura-youtube.jpg", quality=92)
+        SALIDA / nombre_mini, quality=92)
 
     n = int(round(duracion * FPS))
     shutil.rmtree(carpeta, ignore_errors=True)
     carpeta.mkdir(parents=True)
     trozos = [list(range(k, n, args.procesos)) for k in range(args.procesos)]
     with ProcessPoolExecutor(args.procesos) as ex:
-        hechos = sum(ex.map(trabajador, [(puerto, tr, str(carpeta)) for tr in trozos]))
+        hechos = sum(ex.map(trabajador, [(puerto, tr, str(carpeta), VERSION) for tr in trozos]))
     print(f"{hechos} fotogramas renderizados")
-    codificar(carpeta)
+    codificar(carpeta, nombre_mp4)
 
 
-def codificar(carpeta):
-    salida = SALIDA / "opioides-youtube-1080p.mp4"
+def codificar(carpeta, nombre_mp4):
+    salida = SALIDA / nombre_mp4
     subprocess.run([
         ffmpeg(), "-y", "-loglevel", "error",
         "-framerate", str(FPS), "-i", str(carpeta / "%06d.jpg"),
