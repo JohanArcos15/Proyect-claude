@@ -289,7 +289,13 @@
     punto(ctx, x, y, 5, col);
     ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, 11, 0, TAU); ctx.stroke();
     const izq = tx < x;
-    txt(ctx, texto, tx + (izq ? -30 : 30), ty + 8, { size: o.size || 27, weight: 700, align: izq ? 'right' : 'left', color: P.ink });
+    const size = o.size || 27;
+    const wT = U.medir(ctx, texto, { size, weight: 700 });
+    const wS = o.sub ? U.medir(ctx, o.sub, { family: F.mono, size: 18 }) : 0;
+    const ancho = Math.max(wT, wS) + 28, alto = o.sub ? 72 : 44;
+    const bx = izq ? tx - 30 - ancho + 14 : tx + 16;
+    caja(ctx, bx, ty - size * 0.9 - 4, ancho, alto, 10, 'rgba(8,6,16,0.78)');
+    txt(ctx, texto, tx + (izq ? -30 : 30), ty + 8, { size, weight: 700, align: izq ? 'right' : 'left', color: P.ink });
     if (o.sub) txt(ctx, o.sub, tx + (izq ? -30 : 30), ty + 36, { family: F.mono, size: 18, align: izq ? 'right' : 'left', color: P.muted });
     ctx.restore();
   }
@@ -575,13 +581,21 @@
           const [gx, gy] = map(mm.gprot[0], mm.gprot[1]);
           const [ex, ey] = map(mm.exterior[0], mm.exterior[1]);
           const [ix, iy] = map(mm.interior[0], mm.interior[1]);
-          txt(ctx, 'EXTERIOR', 1880, Math.max(80, ey - 120), { family: F.mono, size: 21, color: P.muted, ls: 4, align: 'right', alpha: prog(a, 43.0, 43.6) });
-          txt(ctx, 'CITOPLASMA', 1880, Math.min(900, iy + 40), { family: F.mono, size: 21, color: P.muted, ls: 4, align: 'right', alpha: prog(a, 43.0, 43.6) });
-          rotulo(ctx, bxp + 70, byp - 40, 1450, 250, 'Receptor acoplado a proteína G', prog(a, 43.0, 43.8), { sub: '7 hélices transmembrana' });
-          rotulo(ctx, bxp, byp, bxp - 260, byp - 150, 'Morfina en el sitio de unión', prog(a, 44.6, 45.4), { color: P.drug, sub: 'a escala real (≈1 nm)' });
+          const fe = prog(a, 43.0, 43.6);
+          ctx.save(); ctx.globalAlpha *= fe;
+          caja(ctx, 1712, 128, 176, 40, 10, 'rgba(8,6,16,0.78)');
+          txt(ctx, 'EXTERIOR ↑', 1872, 156, { family: F.mono, size: 20, color: P.muted, ls: 3, align: 'right' });
+          caja(ctx, 1690, Math.min(880, iy + 12), 198, 40, 10, 'rgba(8,6,16,0.78)');
+          txt(ctx, 'CITOPLASMA ↓', 1872, Math.min(880, iy + 12) + 28, { family: F.mono, size: 20, color: P.muted, ls: 3, align: 'right' });
+          ctx.restore();
+          rotulo(ctx, bxp + 70, byp - 40, 1400, 260, 'Receptor acoplado a proteína G', prog(a, 43.0, 43.8), { sub: '7 hélices transmembrana' });
+          rotulo(ctx, bxp, byp, 1400, 400, 'Morfina en el sitio de unión', prog(a, 44.6, 45.4), { color: P.drug, sub: 'a escala real (≈1 nm)' });
           rotulo(ctx, gx + 40, gy, 1450, gy + 60, 'Proteína G inhibidora (Gi/o)', prog(a, 45.2, 46.0), { sub: 'Gα · Gβ · Gγ' });
         }
       }
+      const gT = ctx.createLinearGradient(0, 0, 0, 200);
+      gT.addColorStop(0, 'rgba(8,6,16,0.85)'); gT.addColorStop(1, 'rgba(8,6,16,0)');
+      ctx.fillStyle = gT; ctx.fillRect(0, 0, W, 200);
       txt(ctx, '¿Dónde interactúan?', 150, 110, { family: F.display, size: 60, weight: 800, stretch: 'condensed', alpha: prog(a, 38.7, 39.3) });
       const cards = [
         { l: 'κ', n: 'kappa', c: P.kappa, cod: 'KOP · OPRK1', lig: 'Dinorfinas', t: 47.45 },
