@@ -425,7 +425,7 @@
       if (fSale < 1) {
         plano(ctx, R.img.pastillas_fondo, { zoom, cx, cy, alfa: 1 - fSale });
         if (fFoco > 0) plano(ctx, R.img.pastillas_heroe, { zoom, cx, cy, alfa: fFoco * (1 - fSale) });
-        velo(ctx, 0, 900, 0.75 * (1 - fFoco * 0.5) * (1 - fSale));
+        velo(ctx, 0, 1000, 0.8 * (1 - fSale));
       }
       txt(ctx, 'Hoy hablaremos de', 150, 170, { size: 34, color: P.muted, alpha: prog(a, 1.8, 2.3) * (1 - fFoco) });
       txt(ctx, 'Medicamentos', 150, 250, { family: F.display, size: 92, weight: 800, stretch: 'condensed', alpha: prog(a, 2.6, 3.2) * (1 - fFoco) });
