@@ -654,12 +654,12 @@
         const q = (t * 0.8 + k / 6) % 1;
         const x = cax + Math.sin(k * 2.1) * 10;
         const y = cierreCa < 0.5 ? lerp(cay + 70, dpy, q) : cay + 70 - Math.sin(q * Math.PI) * 45;
-        ion('ion_Ca', x, y, 11, fS * Math.sin(q * Math.PI));
+        ion('ion_Ca', x, y, 14, fS * Math.sin(q * Math.PI));
       }
       // K+ que sale por el GIRK
       for (let k = 0; k < 8; k++) {
         const q = (t * 0.75 + k / 8) % 1;
-        ion('ion_K', gix + Math.cos(k * 1.7) * 12 + q * Math.cos(k) * 40, lerp(dqy, giy - 70, q), 11, aperturaK * Math.sin(q * Math.PI));
+        ion('ion_K', gix + Math.cos(k * 1.7) * 12 + q * Math.cos(k) * 40, lerp(dqy, giy - 70, q), 14, aperturaK * Math.sin(q * Math.PI));
       }
       // Ligandos opioides (morfina 3D) que llegan a los receptores μ
       const recs = ms.mu_pre.map(p => [p, true]).concat(ms.mu_post.map(p => [p, false]));
@@ -670,13 +670,22 @@
         const tx = rx, ty = ry + (pre ? 26 : -26);
         const lx = lerp(-60, tx, f), ly = lerp(hy0 + (i - 1.5) * 20, ty, f) - Math.sin(f * Math.PI) * 50;
         if (f >= 1) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; brillo(ctx, rx, ry, 70, P.mu, 0.6 + 0.3 * Math.sin(t * 5 + i)); ctx.restore(); }
-        dibujarMol3D(ctx, R, MOL.morfina, { cx: lx, cy: ly, esc: 4.6, rotY: t * 1.2 + i, rotX: 0.5 + i, niebla: 0.3 });
+        ctx.save(); ctx.globalCompositeOperation = 'lighter'; brillo(ctx, lx, ly, 70, P.drug, 0.35); ctx.restore();
+        dibujarMol3D(ctx, R, MOL.morfina, { cx: lx, cy: ly, esc: 8.5, rotY: t * 1.2 + i, rotX: 0.5 + i, niebla: 0.25 });
       });
       const fA = prog(a, 53.3, 53.9);
-      txt(ctx, 'Gi/o activa → ↓ AMPc', dpx - 120, dpy - 40, { family: F.mono, size: 22, color: P.accent, alpha: fA });
-      txt(ctx, 'Gi/o activa → ↓ AMPc', dqx - 120, dqy + 70, { family: F.mono, size: 22, color: P.accent, alpha: fA });
+      const chip = (texto, x, y) => {
+        if (fA <= 0) return;
+        const w = U.medir(ctx, texto, { family: F.mono, size: 22 }) + 28;
+        ctx.save(); ctx.globalAlpha *= fA;
+        caja(ctx, x - 14, y - 28, w, 40, 10, 'rgba(8,6,16,0.8)', hexA(P.accent, 0.6), 1.5);
+        txt(ctx, texto, x, y, { family: F.mono, size: 22, color: P.accent });
+        ctx.restore();
+      };
+      chip('Gi/o activa → ↓ AMPc', dpx - 130, dpy - 60);
+      chip('Gi/o activa → ↓ AMPc', dqx - 130, dqy + 80);
       rotulo(ctx, gix, giy, gix - 250, giy + 150, 'Sale K⁺ (canal GIRK)', prog(a, 54.8, 55.4), { color: P.k, sub: 'la neurona se hiperpolariza' });
-      rotulo(ctx, cax, cay, cax - 300, cay - 190, 'Entra menos Ca²⁺', prog(a, 55.6, 56.2), { color: P.ca, sub: 'se libera menos neurotransmisor' });
+      rotulo(ctx, cax, cay, Math.max(440, cax - 260), cay - 150, 'Entra menos Ca²⁺', prog(a, 55.6, 56.2), { color: P.ca, sub: 'se libera menos neurotransmisor' });
       txt(ctx, 'hendidura sináptica', hx1 + 240, hy1 + 8, { family: F.mono, size: 20, color: P.muted, alpha: fS });
       // Panel derecho: potencial de membrana, precisión y vía del dolor
       const gx = 1290, gy = 150, gw = 540, gh = 300;
