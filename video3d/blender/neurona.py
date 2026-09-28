@@ -115,7 +115,7 @@ def main():
         neurona("sola", (-2.5, 0, 0), mat, 7, 1.0, 7, (1, 0.1, 0))
         luz_area("clave", (-6, -8, 7), (0, 0, 0), energia=800, tam=6, forma="DISK")
         luz_area("contra", (5, 10, 6), (0, 0, 0), energia=1200, tam=4, forma="DISK")
-        camara((0.5, -14, 0.5), (0.8, 0, 0), lente=45)
+        camara((0.3, -21, 0.4), (0.4, 0, -0.3), lente=45)
         png = render(sc, TMP / "neurona" / "sola.png")
         a_webp(png, SALIDA / "neurona" / "sola.webp", calidad=88)
         print("neurona sola", flush=True)
