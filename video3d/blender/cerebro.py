@@ -8,7 +8,9 @@ modelan de forma procedural en coordenadas MNI aproximadas.
 Exporta, por fotograma, la proyección en pantalla de las regiones con
 receptores opioides para que la composición dibuje los brillos y etiquetas.
 
-Uso: python3 cerebro.py [tejido|rayosx|ambos] [n_fotogramas] [spp]
+Uso: python3 cerebro.py [tejido|rayosx|ambos] [n_fotogramas] [spp] [inicio] [fin]
+Se puede reanudar: salta los fotogramas ya renderizados. Conviene lanzarlo
+por tandas (inicio/fin) porque Blender acumula memoria entre renders.
 """
 import sys
 import numpy as np
@@ -91,6 +93,8 @@ def main():
     modo = sys.argv[1] if len(sys.argv) > 1 else "ambos"
     n = int(sys.argv[2]) if len(sys.argv) > 2 else 120
     spp = int(sys.argv[3]) if len(sys.argv) > 3 else 32
+    ini = int(sys.argv[4]) if len(sys.argv) > 4 else 0
+    fin = int(sys.argv[5]) if len(sys.argv) > 5 else n
     modos = ["tejido", "rayosx"] if modo == "ambos" else [modo]
     angulos = [-22 + 48 * i / max(1, n - 1) for i in range(n)]
     for m in modos:
@@ -109,12 +113,18 @@ def main():
             marcadores[k].location = tuple(c * ESC for c in p)
             marcadores[k].parent = raiz
         proy = []
-        for i, ang in enumerate(angulos):
+        for ang in angulos:
             raiz.rotation_euler = (0, 0, math.radians(ang))
             bpy.context.view_layer.update()
             proy.append(proyectar(sc, cam, [marcadores[k].matrix_world.translation for k in REGIONES]))
+        for i in range(ini, min(fin, n)):
+            destino = SALIDA / f"cerebro_{m}" / f"{i:03d}.webp"
+            if destino.exists():
+                continue
+            raiz.rotation_euler = (0, 0, math.radians(angulos[i]))
+            bpy.context.view_layer.update()
             png = render(sc, TMP / f"cerebro_{m}" / f"{i:03d}.png")
-            a_webp(png, SALIDA / f"cerebro_{m}" / f"{i:03d}.webp", calidad=86)
+            a_webp(png, destino, calidad=86)
             print(f"cerebro {m} {i + 1}/{n}", flush=True)
         guardar_json(SALIDA / f"cerebro_{m}" / "meta.json",
                      {"n": n, "angulos": angulos, "ancho": ANCHO, "alto": ALTO, "regiones": list(REGIONES), "proyecciones": proy})

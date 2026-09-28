@@ -20,8 +20,8 @@ PASOS = [
     ("neuronas", ["neurona.py", "ambas", "40"], A / "neurona" / "sola.webp"),
     ("pastillas", ["pastillas.py", "48"], A / "pastillas" / "meta.json"),
     ("adormidera", ["amapola.py", "20", "32"], A / "amapola" / "meta.json"),
-    ("cerebro (rayos X)", ["cerebro.py", "rayosx", "120", "16"], A / "cerebro_rayosx" / "meta.json"),
-    ("cerebro (tejido)", ["cerebro.py", "tejido", "24", "32"], A / "cerebro_tejido" / "meta.json"),
+    ("cerebro (rayos X)", ["cerebro.py", "rayosx", "120", "16"], A / "cerebro_rayosx" / "119.webp"),
+    ("cerebro (tejido)", ["cerebro.py", "tejido", "24", "32"], A / "cerebro_tejido" / "023.webp"),
 ]
 
 
@@ -35,8 +35,15 @@ def main():
             continue
         t0 = time.time()
         print(f"> {nombre}…", flush=True)
-        subprocess.run([sys.executable, args[0], *args[1:]], cwd=B, check=True,
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        if args[0] == "cerebro.py":
+            # Por tandas de 20: Blender acumula memoria entre renders
+            n = int(args[2])
+            for ini in range(0, n, 20):
+                subprocess.run([sys.executable, *args, str(ini), str(min(n, ini + 20))], cwd=B, check=True,
+                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        else:
+            subprocess.run([sys.executable, args[0], *args[1:]], cwd=B, check=True,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         print(f"✓ {nombre} en {time.time() - t0:.0f} s", flush=True)
 
 
