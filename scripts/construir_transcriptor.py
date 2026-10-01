@@ -1,7 +1,18 @@
 """Prepara los modelos y el runtime que usa transcriptor/ (Audio a TXT).
 
-Parte de los Whisper multilingües de sherpa-onnx (tiny y base) y los rehace para
-que corran rápido en onnxruntime-web con un solo hilo:
+Español: FastConformer híbrido grande de NVIDIA NeMo (stt_es_fastconformer_hybrid
+_large_pc, 114 M de parámetros, rama CTC exportada por sherpa-onnx). Escribe con
+puntuación y mayúsculas y, al ser CTC, no puede inventar texto que no esté en el
+audio. Se le añade al principio el cálculo de rasgos que hace sherpa-onnx con
+kaldi-native-fbank (ventana Hann de 25 ms cada 10 ms, preénfasis 0,97, FFT de
+512, banco mel de librosa, logaritmo y normalización por banda), de modo que
+entra "frames" [T, 400] y sale "logprobs". Pesos de MatMul en int8 por canal,
+pesos de Conv en int8 con DequantizeLinear y tabla de posiciones en fp16.
+En las pruebas del repositorio (audio de opioides y banda sonora) tiene un 6 %
+de palabras erróneas, frente al 22 % y el 13 % de Whisper base.
+
+Otros idiomas: el Whisper base multilingüe de sherpa-onnx, rehecho para que corra
+rápido en onnxruntime-web con un solo hilo:
 
 - Codificador: el int8 de sherpa-onnx con el espectrograma log-mel incorporado
   (entra "frames" [3000, 400]: ventanas de 400 muestras cada 160, con relleno
@@ -19,6 +30,7 @@ Artifact; la página sólo lee sus bytes y las vuelve a unir.
 Uso:
   python3 scripts/construir_transcriptor.py
 Requiere: numpy, onnx, onnxruntime; npm (para descargar onnxruntime-web).
+Descarga unos 650 MB de modelos de sherpa-onnx la primera vez (en build/).
 """
 import json
 import os
@@ -39,21 +51,22 @@ from onnxruntime.quantization import QuantType, quantize_dynamic
 RAIZ = Path(__file__).resolve().parent.parent
 BUILD = RAIZ / "build" / "transcriptor"
 DESTINO = RAIZ / "transcriptor"
-MODELOS = ["base", "tiny"]
+WHISPER = "base"
+NEMO_ES = "sherpa-onnx-nemo-fast-conformer-ctc-es-1424"
 ORT_VERSION = "1.30.0"
 PARTE = 12 * 1024 * 1024
-URL_SHERPA = "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-whisper-{}.tar.bz2"
+URL_SHERPA = "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/{}.tar.bz2"
 
 
-def descargar_sherpa(nombre):
-    d = BUILD / f"sherpa-onnx-whisper-{nombre}"
+def descargar_sherpa(carpeta):
+    d = BUILD / carpeta
     if d.exists():
         return d
     BUILD.mkdir(parents=True, exist_ok=True)
-    tar = BUILD / f"{nombre}.tar.bz2"
+    tar = BUILD / f"{carpeta}.tar.bz2"
     if not tar.exists():
-        print("descargando", URL_SHERPA.format(nombre))
-        urllib.request.urlretrieve(URL_SHERPA.format(nombre), tar)
+        print("descargando", URL_SHERPA.format(carpeta))
+        urllib.request.urlretrieve(URL_SHERPA.format(carpeta), tar)
     with tarfile.open(tar) as t:
         t.extractall(BUILD)
     return d
@@ -71,13 +84,13 @@ def mel_a_hz(m):
     return np.where(m >= 15, 1000 * np.exp(paso * (m - 15)), m * 200 / 3)
 
 
-def banco_mel(n_mels):
-    """Igual que librosa.filters.mel(sr=16000, n_fft=400, norm='slaney')."""
-    f_fft = np.linspace(0, 8000, 201)
+def banco_mel(n_mels, n_fft=400):
+    """Igual que librosa.filters.mel(sr=16000, n_fft, norm='slaney')."""
+    f_fft = np.linspace(0, 8000, n_fft // 2 + 1)
     f_mel = mel_a_hz(np.linspace(hz_a_mel(0), hz_a_mel(8000), n_mels + 2))
     dif = np.diff(f_mel)
     rampas = f_mel[:, None] - f_fft[None, :]
-    fb = np.zeros((n_mels, 201))
+    fb = np.zeros((n_mels, n_fft // 2 + 1))
     for i in range(n_mels):
         fb[i] = np.maximum(0, np.minimum(-rampas[i] / dif[i], rampas[i + 2] / dif[i + 1]))
     return fb * (2.0 / (f_mel[2:n_mels + 2] - f_mel[:n_mels]))[:, None]
@@ -281,6 +294,88 @@ def grafo_decodificador(capas, emb, pos, V, D, L, H, W, nombre):
     return modelo
 
 
+def construir_nemo_ctc(src, salida):
+    m = onnx.load(src / "model.onnx")
+    g = m.graph
+    # rasgos de sherpa-onnx para NeMo como dos MatMul: preénfasis, ventana y FFT de
+    # 512 son lineales sobre cada ventana de 400 muestras
+    ventana = 0.5 - 0.5 * np.cos(2 * np.pi * np.arange(400) / 400)
+    identidad = np.eye(400)
+    pre = identidad.copy()
+    pre[:, 1:] = identidad[:, 1:] - 0.97 * identidad[:, :-1]
+    pre[:, 0] = identidad[:, 0] * (1 - 0.97)
+    X = np.fft.rfft(pre * ventana, n=512, axis=1)
+    g.initializer.extend([
+        nh.from_array(X.real.astype(np.float32), "r_re"),
+        nh.from_array(X.imag.astype(np.float32), "r_im"),
+        nh.from_array(banco_mel(80, 512).T.astype(np.float32), "r_mel"),
+        nh.from_array(np.array(np.finfo(np.float32).eps, np.float32), "r_eps"),
+        nh.from_array(np.array(1e-5, np.float32), "r_1e5"),
+        nh.from_array(np.array([0], np.int64), "r_i0"),
+    ])
+    rasgos = [
+        h.make_node("MatMul", ["frames", "r_re"], ["r_a"]),
+        h.make_node("MatMul", ["frames", "r_im"], ["r_b"]),
+        h.make_node("Mul", ["r_a", "r_a"], ["r_a2"]),
+        h.make_node("Mul", ["r_b", "r_b"], ["r_b2"]),
+        h.make_node("Add", ["r_a2", "r_b2"], ["r_pot"]),
+        h.make_node("MatMul", ["r_pot", "r_mel"], ["r_m"]),
+        h.make_node("Max", ["r_m", "r_eps"], ["r_mc"]),
+        h.make_node("Log", ["r_mc"], ["r_log"]),
+        h.make_node("ReduceMean", ["r_log"], ["r_media"], axes=[0], keepdims=1),
+        h.make_node("Sub", ["r_log", "r_media"], ["r_c"]),
+        h.make_node("Mul", ["r_c", "r_c"], ["r_c2"]),
+        h.make_node("ReduceMean", ["r_c2"], ["r_var"], axes=[0], keepdims=1),
+        h.make_node("Sqrt", ["r_var"], ["r_desv"]),
+        h.make_node("Add", ["r_desv", "r_1e5"], ["r_desv2"]),
+        h.make_node("Div", ["r_c", "r_desv2"], ["r_norm"]),
+        h.make_node("Transpose", ["r_norm"], ["r_t"], perm=[1, 0]),
+        h.make_node("Unsqueeze", ["r_t", "r_i0"], ["audio_signal"]),
+        h.make_node("Shape", ["frames"], ["r_forma"]),
+        h.make_node("Gather", ["r_forma", "r_i0"], ["length"], axis=0),
+    ]
+    for i, n in enumerate(rasgos):
+        n.name = f"rasgos_{i}"
+        g.node.insert(i, n)
+    del g.input[:]
+    g.input.extend([h.make_tensor_value_info("frames", TP.FLOAT, ["T", 400])])
+    tmp = Path(tempfile.mkdtemp())
+    onnx.save(m, tmp / "f32.onnx")
+    # los MatMul de los rasgos se quedan en fp32: en int8 el espectro se estropea
+    quantize_dynamic(tmp / "f32.onnx", tmp / "q.onnx", weight_type=QuantType.QInt8, per_channel=True,
+                     op_types_to_quantize=["MatMul"], nodes_to_exclude=[n.name for n in rasgos])
+    m = onnx.load(tmp / "q.onnx")
+    shutil.rmtree(tmp)
+    g = m.graph
+    inits = {t.name: t for t in g.initializer}
+    nuevos = []
+    for nombre in {n.input[1] for n in g.node if n.op_type == "Conv"}:
+        t = inits.get(nombre)
+        if t is None or np.prod(t.dims) <= 4096:
+            continue
+        W = nh.to_array(t).astype(np.float32)
+        esc = np.abs(W.reshape(W.shape[0], -1)).max(axis=1) / 127.0
+        esc[esc == 0] = 1
+        Q = np.clip(np.round(W / esc.reshape(-1, *[1] * (W.ndim - 1))), -127, 127).astype(np.int8)
+        g.initializer.remove(t)
+        g.initializer.extend([nh.from_array(Q, nombre + "_q8"), nh.from_array(esc.astype(np.float32), nombre + "_s8"),
+                              nh.from_array(np.zeros_like(esc, np.int8), nombre + "_z8")])
+        nuevos.append(h.make_node("DequantizeLinear", [nombre + "_q8", nombre + "_s8", nombre + "_z8"], [nombre], axis=0))
+    for n in list(g.node):
+        es_tabla = (n.op_type == "Constant" and n.attribute and n.attribute[0].type == onnx.AttributeProto.TENSOR
+                    and np.prod(n.attribute[0].t.dims) > 1_000_000)
+        if es_tabla:
+            tabla = nh.to_array(n.attribute[0].t)
+            g.node.remove(n)
+            g.initializer.append(nh.from_array(tabla.astype(np.float16), n.output[0] + "_f16"))
+            nuevos.append(h.make_node("Cast", [n.output[0] + "_f16"], [n.output[0]], to=TP.FLOAT))
+    for i, n in enumerate(nuevos):
+        g.node.insert(i, n)
+    onnx.save(m, salida)
+    meta = {p.key: p.value for p in m.metadata_props}
+    return int(meta.get("subsampling_factor", 8))
+
+
 def partir(ruta, prefijo):
     datos = ruta.read_bytes()
     partes = []
@@ -294,12 +389,26 @@ def partir(ruta, prefijo):
 def main():
     (DESTINO / "modelos").mkdir(parents=True, exist_ok=True)
     (DESTINO / "ort").mkdir(parents=True, exist_ok=True)
-    for viejo in list((DESTINO / "modelos").glob("*.wasm")) + list((DESTINO / "ort").glob("*.wasm")):
+    for viejo in [*(DESTINO / "modelos").glob("*.wasm"), *(DESTINO / "modelos").glob("*tokens.txt"), *(DESTINO / "ort").glob("*.wasm")]:
         viejo.unlink()
     manifiesto = {"models": {}}
     tmp = Path(tempfile.mkdtemp())
-    for nombre in MODELOS:
-        src = descargar_sherpa(nombre)
+
+    src = descargar_sherpa(NEMO_ES)
+    submuestreo = construir_nemo_ctc(src, tmp / "es.onnx")
+    tokens = (src / "tokens.txt").read_text(encoding="utf8").splitlines()
+    shutil.copy(src / "tokens.txt", DESTINO / "modelos" / "es-tokens.txt")
+    manifiesto["models"]["es"] = {
+        "tipo": "ctc",
+        "tokens": "modelos/es-tokens.txt",
+        "blank": len(tokens) - 1,
+        "segundos_por_salida": 0.01 * submuestreo,
+        "model": partir(tmp / "es.onnx", "modelos/es-fastconformer"),
+    }
+    print("es", manifiesto["models"]["es"]["model"]["size"])
+
+    for nombre in [WHISPER]:
+        src = descargar_sherpa(f"sherpa-onnx-whisper-{nombre}")
         meta = construir_codificador(src, nombre, tmp / "enc.onnx")
         capas, emb, pos, V, D, L, W = pesos_decodificador(src, nombre)
         H = int(meta["n_text_head"])
@@ -309,13 +418,15 @@ def main():
         claves = ["sot", "eot", "transcribe", "no_timestamps", "no_speech", "sot_prev",
                   "all_language_codes", "all_language_tokens", "non_speech_tokens"]
         manifiesto["models"][nombre] = {
+            "tipo": "whisper",
+            "tokens": "modelos/whisper-tokens.txt",
             "config": {**{k: meta[k] for k in claves}, "n_text_layer": L, "n_text_head": H, "dh": D // H},
             "encoder": partir(tmp / "enc.onnx", f"modelos/{nombre}-encoder"),
             "decoder": partir(tmp / "dec.onnx", f"modelos/{nombre}-decoder"),
         }
         print(nombre, "codificador", manifiesto["models"][nombre]["encoder"]["size"],
               "decodificador", manifiesto["models"][nombre]["decoder"]["size"])
-    shutil.copy(src / f"{MODELOS[-1]}-tokens.txt", DESTINO / "modelos" / "tokens.txt")
+        shutil.copy(src / f"{nombre}-tokens.txt", DESTINO / "modelos" / "whisper-tokens.txt")
 
     # runtime: onnxruntime-web con el pegamento de emscripten incluido + su wasm
     subprocess.run(["npm", "pack", f"onnxruntime-web@{ORT_VERSION}", "--silent"], cwd=tmp, check=True)

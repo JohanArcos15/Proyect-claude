@@ -1,7 +1,10 @@
-// Motor de Audio a TXT: Whisper (tiny o base) sobre onnxruntime-web, dentro de un Worker.
-// La página descarga el modelo, corta el audio en tramos de hasta 30 s y reparte
-// bloques de tramos consecutivos entre varios motores; cada uno devuelve el texto
-// tramo a tramo. Los modelos salen de scripts/construir_transcriptor.py.
+// Motor de Audio a TXT sobre onnxruntime-web, dentro de un Worker. Dos modelos:
+// - español: FastConformer CTC de NVIDIA NeMo (preciso, con puntuación; al ser CTC
+//   no puede inventar texto que no esté en el audio), tramos de hasta 90 s;
+// - otros idiomas: Whisper base, tramos de hasta 30 s.
+// La página descarga el modelo, corta el audio por los silencios y reparte bloques
+// de tramos entre varios motores; cada uno devuelve el texto tramo a tramo, partido
+// en frases con su instante. Los modelos salen de scripts/construir_transcriptor.py.
 import * as ort from './ort/ort.wasm.bundle.min.mjs';
 
 const MAX_TOKENS = 224;          // por tramo; con 200 de contexto cabe en los 448 de Whisper
@@ -20,7 +23,7 @@ const FRASE_INICIAL = {
 
 let vocab = null;     // id -> bytes
 let rangos = null;    // bytes (latin1) -> id
-let motor = null;     // { enc, dec, c }
+let motor = null;     // { tipo: 'whisper', enc, dec, c } o { tipo: 'ctc', modelo, simbolos, blank, paso }
 let cancelado = false;
 
 class Cancelado extends Error {}
@@ -51,25 +54,99 @@ function prepararConfig(c) {
   };
 }
 
-async function iniciar({ wasm, tokens, config, enc, dec }) {
+async function iniciar(m) {
   if (!ort.env.wasm.wasmBinary) {
     ort.env.wasm.numThreads = 1;
     ort.env.wasm.proxy = false;
     ort.env.logLevel = 'error';
-    ort.env.wasm.wasmBinary = wasm;
-  }
-  if (!vocab) prepararVocab(tokens);
-  if (motor) {
-    await motor.enc.release();
-    await motor.dec.release();
-    motor = null;
+    ort.env.wasm.wasmBinary = m.wasm;
   }
   const opciones = { executionProviders: ['wasm'], graphOptimizationLevel: 'all', logSeverityLevel: 3 };
+  if (m.tipoModelo === 'ctc') {
+    const simbolos = [];
+    for (const linea of m.tokens.split('\n')) {
+      const i = linea.lastIndexOf(' ');
+      if (i > 0) simbolos[Number(linea.slice(i + 1))] = linea.slice(0, i);
+    }
+    motor = {
+      tipo: 'ctc',
+      modelo: await ort.InferenceSession.create(new Uint8Array(m.model), opciones),
+      simbolos, blank: m.blank, paso: m.paso,
+    };
+    return;
+  }
+  prepararVocab(m.tokens);
   motor = {
-    enc: await ort.InferenceSession.create(new Uint8Array(enc), opciones),
-    dec: await ort.InferenceSession.create(new Uint8Array(dec), opciones),
-    c: prepararConfig(config),
+    tipo: 'whisper',
+    enc: await ort.InferenceSession.create(new Uint8Array(m.enc), opciones),
+    dec: await ort.InferenceSession.create(new Uint8Array(m.dec), opciones),
+    c: prepararConfig(m.config),
   };
+}
+
+// ---------- FastConformer CTC ----------
+
+// Ventanas de 400 muestras cada 160 como kaldi-native-fbank con snip_edges=false:
+// T = (N + 80) / 160 ventanas centradas, con reflejo en los bordes
+function ventanasKaldi(pcm, ini, fin) {
+  const N = fin - ini;
+  const T = Math.floor((N + 80) / 160);
+  const f = new Float32Array(T * 400);
+  for (let t = 0; t < T; t++) {
+    const base = t * 160 - 120;
+    const fila = t * 400;
+    for (let k = 0; k < 400; k++) {
+      let j = base + k;
+      if (j < 0) j = -j - 1;
+      else if (j >= N) j = 2 * N - 1 - j;
+      f[fila + k] = pcm[ini + Math.min(N - 1, Math.max(0, j))];
+    }
+  }
+  return { f, T };
+}
+
+// Decodificación voraz de CTC; cada frase lleva el instante (s, desde el inicio del
+// tramo) de su primer token
+function decodificarCtc(lp, T, V) {
+  const { simbolos, blank, paso } = motor;
+  const frases = [];
+  let actual = '', inicio = 0, previo = -1;
+  const cerrar = () => {
+    let texto = actual.replace(/▁/g, ' ').replace(/\s+/g, ' ').trim();
+    actual = '';
+    if (!/[\p{L}\p{N}]/u.test(texto)) return;   // sólo signos sueltos
+    // cada frase empieza en mayúscula (el modelo a veces la olvida tras un punto)
+    texto = texto.replace(/^([¿¡"«(]*)(\p{Ll})/u, (_, signos, letra) => signos + letra.toUpperCase());
+    frases.push({ t: inicio, texto });
+  };
+  for (let t = 0; t < T; t++) {
+    let id = 0, mejor = -Infinity;
+    for (let v = 0, o = t * V; v < V; v++, o++) if (lp[o] > mejor) { mejor = lp[o]; id = v; }
+    if (id !== previo && id !== blank && id !== 0) {
+      const s = simbolos[id] || '';
+      if (!actual.trim()) inicio = t * paso;
+      actual += s;
+      if (/[.?!…]$/.test(s)) cerrar();
+    }
+    previo = id;
+  }
+  cerrar();
+  return frases;
+}
+
+async function bloqueCtc({ archivo, pcm, tramos }) {
+  for (const { i, ini, fin, silencio } of tramos) {
+    if (cancelado) throw new Cancelado();
+    let frases = [];
+    if (!silencio && fin - ini >= 3200) {
+      const { f, T } = ventanasKaldi(pcm, ini, fin);
+      const r = await motor.modelo.run({ frames: new ort.Tensor('float32', f, [T, 400]) });
+      const lp = r.logprobs;
+      frases = decodificarCtc(lp.data, lp.dims[1], lp.dims[2]);
+    }
+    if (cancelado) throw new Cancelado();
+    postMessage({ tipo: 'tramo', archivo, i, frases, texto: frases.map((x) => x.texto).join(' '), idioma: 'es' });
+  }
 }
 
 // ---------- texto <-> tokens ----------
@@ -238,7 +315,7 @@ async function bloque({ archivo, pcm, tramos, idioma, vocabulario }) {
       texto = callado ? '' : decodificarTexto(res.tokens);
       anterior = callado || res.repetido ? [] : res.tokens;
     }
-    postMessage({ tipo: 'tramo', archivo, i, texto, idioma: lengua });
+    postMessage({ tipo: 'tramo', archivo, i, texto, frases: texto ? [{ t: 0, texto }] : [], idioma: lengua });
   }
 }
 
@@ -254,7 +331,7 @@ onmessage = (e) => {
         await iniciar(m);
         postMessage({ tipo: 'listo' });
       } else if (m.tipo === 'bloque') {
-        await bloque(m);
+        await (motor.tipo === 'ctc' ? bloqueCtc(m) : bloque(m));
         postMessage({ tipo: 'bloque-fin', archivo: m.archivo });
       }
     } catch (err) {

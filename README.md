@@ -11,7 +11,7 @@ sobre opioides, más un vídeo listo para YouTube.
 | Vídeo 2D (primera versión, ilustración vectorial) | `salida/opioides-youtube-1080p.mp4` |
 | Subtítulos en español (válidos para ambas versiones) | `salida/subtitulos-es.srt` (también `data/subtitulos.vtt`) |
 | Página interactiva (reproductor 3D, cerebro y moléculas girables) | `index.html` |
-| **Audio a TXT**: transcriptor de audios en el navegador (Whisper) | `transcriptor/` |
+| **Audio a TXT**: transcriptor de audios en el navegador | `transcriptor/` |
 
 ## Qué dice el audio
 
@@ -129,20 +129,34 @@ Cada locución sintética se verificó re-transcribiéndola con Whisper large‑
 ## Audio a TXT (transcriptor)
 
 `transcriptor/` es una página que transcribe uno o varios audios (hasta 50 MB
-cada uno) con Whisper dentro del navegador y entrega el texto en un `.txt`,
-uno por archivo o todos juntos. El audio no sale del equipo.
+cada uno) dentro del navegador y entrega el texto en un `.txt`, uno por archivo
+o todos juntos. El audio no sale del equipo.
 
-- `transcriptor/index.html`: interfaz, lectura del audio (16 kHz mono), corte
-  en tramos de hasta 30 s por los silencios y reparto en bloques entre varios
-  motores en paralelo (uno por cada dos núcleos, hasta 3).
+- **Español**: FastConformer híbrido grande de NVIDIA NeMo
+  (`stt_es_fastconformer_hybrid_large_pc`, 114 M de parámetros, rama CTC). Escribe
+  con puntuación y mayúsculas y, al ser CTC, no puede inventar frases que no están
+  en el audio. Tramos de hasta 90 s cortados en silencios y marcas de tiempo por
+  frase.
+- **Otros idiomas**: Whisper base, con contexto del tramo anterior, regla de «sin
+  voz» y corte de bucles de repetición.
+
+Palabras erróneas (WER) frente a las transcripciones revisadas de este repositorio:
+
+| Audio | Whisper base | FastConformer es |
+|---|---|---|
+| Narración original (65 s) | 22 % | 6 % |
+| Banda sonora con música (2:48) | 13,5 % | 6,5 % |
+| 20 s de solo ruido | escribe «[Música]» o inventa frases | nada |
+
+- `transcriptor/index.html`: interfaz, lectura del audio (16 kHz mono), corte por
+  silencios y reparto del trabajo entre varios motores en paralelo (uno por cada
+  dos núcleos, hasta 3).
 - `transcriptor/motor.js`: Worker con onnxruntime-web (WebAssembly, un hilo).
-  Decodificación voraz con contexto del tramo anterior, una frase de arranque
-  con puntuación, vocabulario opcional del usuario, regla de «sin voz» de
-  Whisper y corte de bucles de repetición con reintento a temperatura 0,4.
 - `scripts/construir_transcriptor.py`: genera `transcriptor/modelos/` y
-  `transcriptor/ort/` (no se versionan) a partir de los Whisper base y tiny de
-  sherpa-onnx. El decodificador se rehace con caché propia: unas 6 veces más
-  rápido por token que el original en onnxruntime-web.
+  `transcriptor/ort/` (no se versionan) a partir de los modelos de sherpa-onnx.
+  Al FastConformer le añade el cálculo de rasgos de kaldi-native-fbank dentro del
+  grafo y lo cuantiza a int8 (123 MB); el decodificador de Whisper se rehace con
+  caché propia.
 
 ```bash
 pip install numpy onnx onnxruntime
@@ -150,9 +164,8 @@ python3 scripts/construir_transcriptor.py
 npx http-server -c-1 transcriptor   # y abre http://127.0.0.1:8080
 ```
 
-En una máquina de 4 núcleos, el modelo Preciso (base) transcribe unas 4,5 veces
-más rápido que la duración del audio con 2 motores, y el Rápido (tiny) unas 6
-veces, con más errores.
+En una máquina de 4 núcleos, con 2 motores, el modelo de español transcribe unas
+8 veces más rápido que la duración del audio.
 Chromium sin códecs propietarios no lee AAC/M4A; Chrome, Edge y Safari sí.
 
 ## Rigor y fuentes
@@ -173,5 +186,6 @@ Contenido educativo; no sustituye la orientación de un profesional de la salud.
   Display, JetBrains Mono): SIL Open Font License, en `assets/fonts/`.
 - Voz Piper `es_MX-claude-high`: Apache‑2.0.
 - Música: sintetizada por `scripts/construir_datos.py`.
-- Whisper (pesos de OpenAI): MIT. Exportación ONNX de sherpa-onnx: Apache‑2.0.
+- FastConformer es (NVIDIA NeMo): CC‑BY‑4.0. Whisper (pesos de OpenAI): MIT.
+  Exportaciones ONNX de sherpa-onnx: Apache‑2.0.
   onnxruntime-web: MIT.

@@ -42,6 +42,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body {
   background: var(--papel);
   color: var(--tinta);
@@ -81,7 +82,7 @@ h1 span { color: var(--acento); }
 /* ajustes */
 .ajustes {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 17rem) minmax(0, 1fr);
   gap: 16px 20px;
   align-items: end;
 }
@@ -90,29 +91,6 @@ h1 span { color: var(--acento); }
 .campo { display: grid; gap: 6px; min-width: 0; }
 .etiqueta { font-size: 13px; font-weight: 600; color: var(--tenue); }
 .opcional { font-weight: 400; }
-.segmentos {
-  display: inline-flex;
-  height: 44px;
-  border: 1px solid var(--borde);
-  border-radius: 8px;
-  background: var(--superficie);
-  padding: 3px;
-  gap: 3px;
-}
-.segmentos label { position: relative; display: flex; }
-.segmentos input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
-.segmentos span {
-  display: flex; gap: 8px; align-items: center;
-  padding: 0 14px;
-  border-radius: 6px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-.segmentos small { font: 400 12px var(--f-dato); color: var(--tenue); }
-.segmentos input:checked + span { background: var(--acento); color: var(--sobre-acento); }
-.segmentos input:checked + span small { color: inherit; opacity: .8; }
-.segmentos input:focus-visible + span { outline: 2px solid var(--acento); outline-offset: 2px; }
-.segmentos input:disabled + span { opacity: .55; }
 select, input[type="text"] {
   width: 100%;
   min-width: 0;
@@ -125,7 +103,8 @@ select, input[type="text"] {
 input[type="text"]::placeholder { color: var(--tenue); opacity: .8; }
 .casilla { display: inline-flex; gap: 10px; align-items: center; font-weight: 500; cursor: pointer; }
 .casilla input { width: 18px; height: 18px; accent-color: var(--acento); margin: 0; }
-.nota-ajustes { margin: 0; font-size: 13px; color: var(--tenue); }
+.nota-ajustes { margin: 0; padding-bottom: 2px; font-size: 14px; color: var(--tenue); max-width: 56ch; text-wrap: pretty; }
+.nota-ajustes strong { color: var(--tinta); font-weight: 600; }
 
 /* zona de entrada */
 .zona {
@@ -331,35 +310,29 @@ h2 small { font: 400 13px var(--f-dato); color: var(--tenue); margin-left: 6px; 
 
 <main class="app">
   <header>
-    <p class="sobre">Whisper · corre en tu navegador</p>
+    <p class="sobre">Transcripción en tu navegador</p>
     <h1>Audio a <span>TXT</span></h1>
     <p class="lema">Sube uno o varios audios de hasta 50 MB. Se transcriben aquí mismo, sin enviar el audio a ningún servidor, y te llevas el texto en un archivo .txt.</p>
   </header>
 
   <section class="ajustes" aria-label="Ajustes">
     <div class="campo">
-      <span class="etiqueta" id="etq-modelo">Modelo</span>
-      <div class="segmentos" role="radiogroup" aria-labelledby="etq-modelo">
-        <label><input type="radio" name="modelo" id="modelo-base" value="base" checked><span>Preciso <small>80 MB</small></span></label>
-        <label><input type="radio" name="modelo" id="modelo-tiny" value="tiny"><span>Rápido <small>43 MB</small></span></label>
-      </div>
-    </div>
-    <div class="campo">
       <label class="etiqueta" for="idioma">Idioma del audio</label>
       <select id="idioma">
         <option value="es" selected>Español</option>
-        <option value="auto">Detectar automáticamente</option>
         <option value="en">Inglés</option>
         <option value="pt">Portugués</option>
         <option value="fr">Francés</option>
         <option value="it">Italiano</option>
         <option value="de">Alemán</option>
         <option value="ca">Catalán</option>
+        <option value="auto">Otro (detectar automáticamente)</option>
       </select>
     </div>
-    <div class="campo ancho">
+    <p class="nota-ajustes" id="nota-modelo"></p>
+    <div class="campo ancho" id="campo-vocabulario" hidden>
       <label class="etiqueta" for="vocabulario">Nombres y términos que aparecen <span class="opcional">(opcional, ayuda a escribirlos bien)</span></label>
-      <input type="text" id="vocabulario" placeholder="p. ej. opioides, receptor kappa, Dra. Méndez" autocomplete="off">
+      <input type="text" id="vocabulario" placeholder="p. ej. nombres propios, siglas, términos técnicos" autocomplete="off">
     </div>
     <label class="casilla ancho"><input type="checkbox" id="marcas"> Incluir marcas de tiempo en el .txt</label>
   </section>
@@ -400,8 +373,9 @@ h2 small { font: 400 13px var(--f-dato); color: var(--tenue); margin-left: 6px; 
   </section>
 
   <footer class="pie">
-    <p><strong>Cómo funciona.</strong> Cada audio se corta en tramos de hasta 30 segundos por sus silencios y Whisper los transcribe en tu equipo, con varios motores en paralelo si el procesador lo permite. El modelo Preciso (Whisper base) es el recomendado para español; el Rápido (Whisper tiny) tarda la mitad pero se equivoca más.</p>
-    <p><strong>Cuánto tarda.</strong> Depende del equipo: en un portátil normal, una hora de audio suele llevar entre 10 y 30 minutos con el modelo Preciso. Puedes seguir usando la pestaña mientras tanto.</p>
+    <p><strong>Cómo funciona.</strong> Cada audio se corta por sus silencios en tramos de hasta 90 segundos y se transcribe en tu equipo, con varios motores en paralelo si el procesador lo permite. Para español se usa FastConformer, un modelo de NVIDIA entrenado con miles de horas de español: escribe con puntuación y, como reconoce el audio sonido a sonido, no inventa frases que no se dijeron. Para otros idiomas se usa Whisper base, que es menos preciso.</p>
+    <p><strong>Para que salga bien.</strong> La precisión baja con mucho ruido de fondo, música alta o varias personas hablando a la vez. Las palabras que no se entienden bien pueden salir mal escritas, pero no se sustituyen por otras frases.</p>
+    <p><strong>Cuánto tarda.</strong> Depende del equipo: en un portátil normal, una hora de audio en español suele llevar entre 5 y 15 minutos. Puedes seguir usando la pestaña mientras tanto.</p>
   </footer>
 </main>
 <div class="aviso-flotante" id="aviso" role="status" aria-live="polite" hidden></div>
@@ -410,7 +384,7 @@ h2 small { font: 400 13px var(--f-dato); color: var(--tenue); margin-left: 6px; 
 const LIMITE = 50 * 1024 * 1024;
 const CACHE = 'audio-a-txt-v1';
 const IDIOMAS = { es: 'español', en: 'inglés', pt: 'portugués', fr: 'francés', it: 'italiano', de: 'alemán', ca: 'catalán' };
-const NOMBRE_MODELO = { base: 'Preciso', tiny: 'Rápido' };
+const NOMBRE_MODELO = { es: 'de español', base: 'Whisper base' };
 
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -430,15 +404,24 @@ const S = {
   wasmOk: true,
 };
 
-// Un resultado real del modelo Preciso sobre una narración de 65 s, para que se vea el formato
+// Un resultado real del modelo de español sobre una narración de 65 s, para que se vea el formato
 const EJEMPLO = {
   id: 0, ejemplo: true, nombre: 'narracion-opioides.m4a', tam: 1050114, duracion: 64.6, estado: 'listo', idioma: 'es',
-  tramos: [
-    { ini: 0, fin: 22.1, hecho: true, texto: 'Hoy hablaremos de medicamentos. En principal hablaremos de los opióides, porque es un grupo farmacológico muy interesante que actúa sobre el sistema nervioso en ciertos receptores del cérebro que ya veremos más adelante.' },
-    { ini: 22.1, fin: 49.8, hecho: true, texto: '¿Qué es un opióides? Bueno, un opióide es una serie de moléculas las cuales tienen una estructura específica que pardon, que pardon de un grupo familiar en específico. Entonces, ¿qué hacen o dónde interactúan los opióides? Bueno, los opióides interactúan sobre unos receptores de las neuronas llamados Kappa, Mu,' },
-    { ini: 49.8, fin: 64.6, hecho: true, texto: 'y en esos receptores actúan, actúan al deando el potencial de la acción de premio del sistema nervioso para ejercer su mecanismo terapéutico.' },
-  ],
+  tramos: [{
+    ini: 0, fin: 64.6, hecho: true,
+    texto: '',
+    frases: [
+      { t: 0, texto: "Hoy hablaremos de medicamentos." },
+      { t: 5, texto: "En principal hablaremos de los opioides, porque son un grupo farmacológico muy interesante que actúa sobre el sistema nervioso en ciertos receptores del cerebro que ya veremos más adelante." },
+      { t: 21, texto: "Entonces, ¿qué es un opioide?" },
+      { t: 24, texto: "Bueno, un opioide son una serie de moléculas, las cuales tienen una estructura específica que parte de un grupo familiar en específico." },
+      { t: 37, texto: "Entonces, ¿qué hacen o en donde interactúan los opioides?" },
+      { t: 42, texto: "Bueno los opioides interactúan sobre unos receptores en las neuronas llamados capa mio y en esos receptores actúa." },
+      { t: 54, texto: "Actúa alterando el potencial de acción, depremando el sistema nervioso para ejercer su mecanismo terapéutico." },
+    ],
+  }],
 };
+EJEMPLO.tramos[0].texto = EJEMPLO.tramos[0].frases.map((f) => f.texto).join(' ');
 S.items.push(EJEMPLO);
 
 // ---------- utilidades ----------
@@ -526,17 +509,41 @@ async function leerPartes(entrada, avance) {
 
 let manifiesto = null;
 
+async function cargarManifiesto() {
+  if (manifiesto) return manifiesto;
+  const r = await fetch(new URL('modelos/manifest.json', location.href));
+  if (!r.ok) throw new Error('no se encontró la lista de modelos');
+  manifiesto = await r.json();
+  return manifiesto;
+}
+
+function megas(modelo) {
+  const m = manifiesto?.models[modelo];
+  if (!m) return '';
+  const partes = m.tipo === 'ctc' ? [m.model] : [m.encoder, m.decoder];
+  return Math.round((manifiesto.wasm.size + partes.reduce((a, p) => a + p.size, 0)) / 1048576) + ' MB';
+}
+
+function notaModelo() {
+  const es = $('#idioma').value === 'es';
+  const mb = megas(es ? 'es' : 'base');
+  $('#nota-modelo').innerHTML = es
+    ? `<strong>Modelo para español de NVIDIA (FastConformer).</strong> Escribe con puntuación y no inventa frases que no están en el audio.${mb ? ` La primera vez descarga ${mb}.` : ''}`
+    : `<strong>Modelo Whisper base.</strong> Menos preciso que el de español; con ruido o música a veces inventa frases.${mb ? ` La primera vez descarga ${mb}.` : ''}`;
+  $('#campo-vocabulario').hidden = es;
+}
+
 function cantidadMotores(modelo) {
   const nucleos = navigator.hardwareConcurrency || 2;
   const memoria = navigator.deviceMemory || 8;
   let n = Math.floor(nucleos / 2);
   if (memoria <= 2) n = 1;
   else if (memoria <= 4) n = Math.min(n, 2);
-  return Math.max(1, Math.min(n, modelo === 'tiny' ? 4 : 3));
+  return Math.max(1, Math.min(n, 3));
 }
 
 function mensajeMotor(texto) {
-  if (/memory|memoria|allocat|Out of/i.test(texto)) return 'El equipo se quedó sin memoria al preparar el modelo. Cierra otras pestañas o elige el modelo Rápido.';
+  if (/memory|memoria|allocat|Out of/i.test(texto)) return 'El equipo se quedó sin memoria al preparar el modelo. Cierra otras pestañas y vuelve a intentarlo.';
   if (/Refused to compile|unsafe-eval|CompileError|WebAssembly/i.test(texto)) return 'Este visor no permite ejecutar WebAssembly, que el transcriptor necesita. Abre la página en Chrome, Edge o Firefox de escritorio.';
   return 'No se pudo preparar el modelo: ' + texto;
 }
@@ -549,26 +556,24 @@ async function prepararMotores(modelo) {
     for (const m of S.motores) m.w.terminate();
     S.motores = [];
     S.modelo = null;
-    if (!manifiesto) {
-      const r = await fetch(new URL('modelos/manifest.json', location.href));
-      if (!r.ok) throw new Error('no se encontró la lista de modelos');
-      manifiesto = await r.json();
-    }
+    await cargarManifiesto();
     const m = manifiesto.models[modelo];
-    const total = manifiesto.wasm.size + m.encoder.size + m.decoder.size + 816730;
+    const ctc = m.tipo === 'ctc';
+    const partes = ctc ? [m.model] : [m.encoder, m.decoder];
+    const total = manifiesto.wasm.size + partes.reduce((a, p) => a + p.size, 0);
     let cargado = 0, ultimo = 0;
     const avance = (n) => {
       cargado += n;
       const ahora = performance.now();
       if (ahora - ultimo < 150 && cargado < total) return;
       ultimo = ahora;
-      estado('descargando', `Descargando el modelo ${NOMBRE_MODELO[modelo]} · ${Math.round(cargado / 1048576)} de ${Math.round(total / 1048576)} MB`, cargado / total);
+      estado('descargando', `Descargando el modelo ${NOMBRE_MODELO[modelo]} · ${Math.round(Math.min(cargado, total) / 1048576)} de ${Math.round(total / 1048576)} MB`, Math.min(1, cargado / total));
     };
     avance(0);
     const wasm = await leerPartes(manifiesto.wasm, avance);
-    const tokens = new TextDecoder().decode(await leer('modelos/tokens.txt', avance));
-    const enc = await leerPartes(m.encoder, avance);
-    const dec = await leerPartes(m.decoder, avance);
+    const tokens = new TextDecoder().decode(await leer(m.tokens, avance));
+    const pesos = [];
+    for (const p of partes) pesos.push(await leerPartes(p, avance));
 
     const n = cantidadMotores(modelo);
     estado('preparando', n > 1 ? `Preparando ${n} motores en paralelo…` : 'Preparando el motor…');
@@ -588,8 +593,10 @@ async function prepararMotores(modelo) {
       w.onerror = (e) => { e.preventDefault?.(); w.terminate(); ok({ error: e.message || 'el motor no arrancó' }); };
       // el primero se queda con los originales; el resto recibe copias
       const copia = (b) => (i === n - 1 ? b.buffer : b.slice().buffer);
-      const msg = { tipo: 'iniciar', wasm: copia(wasm), tokens, config: m.config, enc: copia(enc), dec: copia(dec) };
-      w.postMessage(msg, [msg.wasm, msg.enc, msg.dec]);
+      const msg = ctc
+        ? { tipo: 'iniciar', tipoModelo: 'ctc', wasm: copia(wasm), tokens, blank: m.blank, paso: m.segundos_por_salida, model: copia(pesos[0]) }
+        : { tipo: 'iniciar', tipoModelo: 'whisper', wasm: copia(wasm), tokens, config: m.config, enc: copia(pesos[0]), dec: copia(pesos[1]) };
+      w.postMessage(msg, ctc ? [msg.wasm, msg.model] : [msg.wasm, msg.enc, msg.dec]);
     })));
     S.motores = iniciados.filter((x) => x.w);
     if (!S.motores.length) throw new Error(iniciados[0]?.error || 'el motor no arrancó');
@@ -657,8 +664,9 @@ function remuestrear(x, sr) {
   return y;
 }
 
-// Tramos de hasta 30 s que terminan en el punto más silencioso entre los 20 y los 30 s
-function planificar(pcm) {
+// Tramos de hasta `largo` centésimas de segundo que terminan en el punto más silencioso
+// de su último tercio (90 s para el modelo de español, 30 s para Whisper)
+function planificar(pcm, largo) {
   const FR = 160;
   const n = Math.floor(pcm.length / FR);
   if (n === 0) return pcm.length ? [{ ini: 0, fin: pcm.length, silencio: true }] : [];
@@ -680,10 +688,10 @@ function planificar(pcm) {
   const tramos = [];
   for (let s = 0; s < n;) {
     let fin = n;
-    if (n - s > 3000) {
+    if (n - s > largo) {
       let e = Infinity;
-      fin = s + 3000;
-      for (let f = s + 2000; f < s + 3000; f++) if (suave[f] < e) { e = suave[f]; fin = f; }
+      fin = s + largo;
+      for (let f = s + Math.round(largo * 2 / 3); f < s + largo; f++) if (suave[f] < e) { e = suave[f]; fin = f; }
     }
     let pico = 0;
     for (let f = s; f < fin; f++) if (suave[f] > pico) pico = suave[f];
@@ -703,18 +711,28 @@ async function prepararArchivo(it) {
     const pcm = await leerAudio(it.file);
     it.duracion = pcm.length / 16000;
     if (it.duracion < 0.2) throw new Error('El audio está vacío o dura menos de un segundo.');
-    const plan = planificar(pcm);
-    it.tramos = plan.map((t) => ({ ini: t.ini / 16000, fin: t.fin / 16000, silencio: t.silencio, hecho: false, texto: '' }));
+    const ctc = manifiesto.models[it.ajustes.modelo].tipo === 'ctc';
+    const plan = planificar(pcm, ctc ? 9000 : 3000);
+    it.tramos = plan.map((t) => ({ ini: t.ini / 16000, fin: t.fin / 16000, silencio: t.silencio, hecho: t.silencio && ctc, texto: '', frases: [] }));
     it.estado = 'trabajando';
     it.t0 = performance.now();
-    // bloques de tramos consecutivos, uno por motor (al menos 4 tramos con voz en cada uno,
-    // para que el contexto entre tramos ayude)
     const conVoz = plan.filter((t) => !t.silencio).length;
     it.bloquesPendientes = 0;
     if (!conVoz) {
       for (const t of it.tramos) t.hecho = true;
       return;
     }
+    if (ctc) {
+      // cada tramo es independiente: uno por bloque, y los motores se los reparten
+      plan.forEach((t, i) => {
+        if (t.silencio) return;
+        S.bloques.push({ archivo: it.clave, pcm: pcm.slice(t.ini, t.fin), tramos: [{ i, ini: 0, fin: t.fin - t.ini, silencio: false }], idioma: 'es' });
+        it.bloquesPendientes++;
+      });
+      return;
+    }
+    // Whisper: bloques de tramos consecutivos, uno por motor (al menos 4 tramos con voz
+    // en cada uno, para que el contexto entre tramos ayude)
     const nBloques = Math.max(1, Math.min(S.motores.length || 1, Math.ceil(conVoz / 4)));
     const porBloque = conVoz / nBloques;
     let inicio = 0, vistos = 0;
@@ -803,6 +821,7 @@ function mensajeDeMotor(motor, m) {
     if (it && it.tramos[m.i]) {
       const t = it.tramos[m.i];
       t.texto = m.texto;
+      t.frases = (m.frases || []).map((f) => ({ t: t.ini + f.t, texto: f.texto }));
       t.hecho = true;
       if (m.idioma && !it.idioma) it.idioma = m.idioma;
       if (!t.silencio) S.audioHecho += t.fin - t.ini;
@@ -831,7 +850,7 @@ function motorCaido(motor) {
   motor.bloque = null;
   if (it) {
     it.bloquesPendientes = Math.max(0, (it.bloquesPendientes || 1) - 1);
-    detenerArchivo(it, 'error', 'Un motor se detuvo a mitad, probablemente por falta de memoria. Vuelve a intentarlo o usa el modelo Rápido.');
+    detenerArchivo(it, 'error', 'Un motor se detuvo a mitad, probablemente por falta de memoria. Cierra otras pestañas y vuelve a intentarlo.');
   }
   if (!S.motores.length) S.modelo = null;
   bombear();
@@ -860,7 +879,7 @@ function detenerArchivo(it, estadoFinal, mensaje) {
 // ---------- entrada de archivos ----------
 function leerAjustes() {
   return {
-    modelo: document.querySelector('input[name="modelo"]:checked').value,
+    modelo: $('#idioma').value === 'es' ? 'es' : 'base',
     idioma: $('#idioma').value,
     vocabulario: $('#vocabulario').value.trim().slice(0, 300),
   };
@@ -943,13 +962,21 @@ document.addEventListener('drop', (e) => {
 });
 
 // ---------- texto de salida ----------
+function frasesDe(it) {
+  return it.tramos.flatMap((t) => (t.frases?.length ? t.frases : t.texto ? [{ t: t.ini, texto: t.texto }] : []));
+}
+
+// Con marcas: una frase por línea con su instante. Sin marcas: párrafos de unas 70
+// palabras que siempre terminan en un punto.
 function textoDe(it, conMarcas) {
-  const partes = it.tramos.filter((t) => t.texto);
-  if (conMarcas) return partes.map((t) => `[${hms(t.ini, true)}] ${t.texto}`).join('\n');
-  let s = '';
-  for (const t of partes) {
-    if (!s) s = t.texto;
-    else s += (/[.?!…»"”)]$/.test(s) ? '\n\n' : ' ') + t.texto;
+  const frases = frasesDe(it);
+  if (conMarcas) return frases.map((f) => `[${hms(f.t, true)}] ${f.texto}`).join('\n');
+  let s = '', palabras = 0;
+  for (const f of frases) {
+    if (!s) s = f.texto;
+    else if (palabras >= 70 && /[.?!…»"”)]$/.test(s)) { s += '\n\n' + f.texto; palabras = 0; }
+    else s += ' ' + f.texto;
+    palabras += f.texto.split(/\s+/).length;
   }
   return s;
 }
@@ -967,7 +994,7 @@ function nombreTxt(nombre) {
 function textoCombinado(lista, conMarcas) {
   const fecha = new Date().toLocaleDateString('es', { day: 'numeric', month: 'long', year: 'numeric' });
   const raya = '='.repeat(60);
-  let s = `Transcripciones · ${fecha}\n${lista.length === 1 ? '1 archivo' : lista.length + ' archivos'} · Whisper ${lista[0]?.ajustes?.modelo || 'base'}, transcrito en el navegador\n`;
+  let s = `Transcripciones · ${fecha}\n${lista.length === 1 ? '1 archivo' : lista.length + ' archivos'}, transcritos en el navegador\n`;
   for (const it of lista) {
     s += `\n${raya}\n${cabeceraDe(it)}${it.estado !== 'listo' ? ' · incompleta' : ''}\n${raya}\n\n${textoDe(it, conMarcas) || '(sin voz detectada)'}\n`;
   }
@@ -1058,7 +1085,8 @@ function htmlItem(it) {
       }
       if (t.hecho && t.texto) {
         cerrarHueco();
-        filas.push(`<p class="renglon"><time>${hms(t.ini)}</time><span>${esc(t.texto)}</span></p>`);
+        const frases = t.frases?.length ? t.frases : [{ t: t.ini, texto: t.texto }];
+        for (const f of frases) filas.push(`<p class="renglon"><time>${hms(f.t)}</time><span>${esc(f.texto)}</span></p>`);
       }
     }
     cerrarHueco();
@@ -1128,7 +1156,6 @@ function pintarCabecera() {
   if (!listos.length) boton.textContent = 'Descargar todo (.txt)';
   $('#detener').hidden = !hayTrabajo();
   const ocupado = hayTrabajo();
-  for (const r of document.querySelectorAll('input[name="modelo"]')) r.disabled = ocupado;
   $('#idioma').disabled = ocupado;
   $('#vocabulario').disabled = ocupado;
 }
@@ -1176,6 +1203,10 @@ $('#detener').addEventListener('click', () => {
     estado('error', 'Este visor no permite ejecutar WebAssembly, que el transcriptor necesita. Abre la página en Chrome, Edge o Firefox de escritorio.');
   }
   pintar();
+  try { await cargarManifiesto(); } catch { /* se reintenta al transcribir */ }
+  notaModelo();
 })();
+$('#idioma').addEventListener('change', notaModelo);
+notaModelo();
 pintar();
 </script>
