@@ -129,6 +129,7 @@ input[type="text"]::placeholder { color: var(--tenue); opacity: .8; }
 
 /* zona de entrada */
 .zona {
+  position: relative;
   width: 100%;
   display: grid;
   justify-items: center;
@@ -141,7 +142,18 @@ input[type="text"]::placeholder { color: var(--tenue); opacity: .8; }
   transition: background .15s, border-color .15s;
 }
 .zona:hover, .zona.encima { background: var(--acento-suave); border-color: var(--acento); }
-.zona:disabled { cursor: not-allowed; opacity: .6; }
+.zona:focus-within { outline: 2px solid var(--acento); outline-offset: 2px; }
+/* el selector de archivos real cubre toda la zona: el toque cae directamente en él,
+   sin depender de un clic simulado que algunos visores y apps móviles ignoran */
+.zona input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  font-size: 0;
+}
 .zona svg { width: 168px; height: 40px; color: var(--acento); }
 .zona strong { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.01em; }
 .zona .formatos { font: 400 12px/1.5 var(--f-dato); color: var(--tenue); }
@@ -327,13 +339,13 @@ h2 small { font: 400 13px var(--f-dato); color: var(--tenue); margin-left: 6px; 
   </section>
 
   <section aria-label="Añadir audios">
-    <input type="file" id="archivos" multiple hidden accept="audio/*,video/mp4,video/webm,.mp3,.m4a,.wav,.ogg,.oga,.opus,.flac,.aac,.weba,.webm,.mp4">
-    <button type="button" class="zona" id="zona">
+    <div class="zona" id="zona">
       <svg viewBox="0 0 168 40" aria-hidden="true"><g fill="currentColor" id="onda"></g></svg>
       <strong>Arrastra los audios aquí</strong>
-      <span>o haz clic para elegirlos (puedes elegir varios)</span>
+      <span>o toca aquí para elegirlos (puedes elegir varios)</span>
       <span class="formatos">MP3 · M4A · WAV · OGG · OPUS · FLAC · WEBM — hasta 50 MB cada uno</span>
-    </button>
+      <input type="file" id="archivos" multiple aria-label="Elegir audios para transcribir">
+    </div>
   </section>
 
   <div class="estado" id="estado" data-fase="inactivo" role="status" aria-live="polite">
@@ -365,7 +377,6 @@ const LIMITE = 50 * 1024 * 1024;
 const CACHE = 'audio-a-txt-v1';
 const IDIOMAS = { es: 'español', en: 'inglés', pt: 'portugués', fr: 'francés', it: 'italiano', de: 'alemán', ca: 'catalán' };
 const NOMBRE_MODELO = { base: 'Preciso', tiny: 'Rápido' };
-const EXTENSIONES = /\.(mp3|m4a|wav|ogg|oga|opus|flac|aac|weba|webm|mp4|mpga|mpeg)$/i;
 
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -830,8 +841,10 @@ function agregar(lista) {
   S.errorMotor = null;
   for (const file of archivos) {
     const it = { id: S.siguienteId++, file, nombre: file.name, tam: file.size, estado: 'cola', tramos: [], ajustes: { ...ajustes } };
-    const esAudio = /^(audio|video)\//.test(file.type) || EXTENSIONES.test(file.name);
-    if (!esAudio) { it.estado = 'rechazado'; it.error = 'No parece un archivo de audio.'; it.file = null; }
+    // sólo se descarta lo que seguro no es audio; el resto lo decide el decodificador
+    const noEsAudio = /^(image|text)\//.test(file.type) || /\.(pdf|docx?|xlsx?|pptx?|zip|jpe?g|png|gif|heic|txt)$/i.test(file.name);
+    if (!S.wasmOk) { it.estado = 'error'; it.error = 'Este visor no permite ejecutar WebAssembly, que el transcriptor necesita. Abre la página en Chrome, Edge o Firefox de escritorio.'; }
+    else if (noEsAudio) { it.estado = 'rechazado'; it.error = 'No parece un archivo de audio.'; it.file = null; }
     else if (file.size > LIMITE) { it.estado = 'rechazado'; it.error = `Pesa ${mb(file.size)}; el límite es 50 MB por archivo.`; it.file = null; }
     S.items.push(it);
   }
@@ -840,7 +853,6 @@ function agregar(lista) {
 }
 
 const zona = $('#zona');
-zona.addEventListener('click', () => $('#archivos').click());
 $('#archivos').addEventListener('change', (e) => { agregar(e.target.files); e.target.value = ''; });
 for (const ev of ['dragenter', 'dragover']) {
   document.addEventListener(ev, (e) => {
@@ -854,7 +866,7 @@ document.addEventListener('drop', (e) => {
   if (!e.dataTransfer?.files?.length) return;
   e.preventDefault();
   zona.classList.remove('encima');
-  if (!zona.disabled) agregar(e.dataTransfer.files);
+  agregar(e.dataTransfer.files);
 });
 
 // ---------- texto de salida ----------
@@ -1046,7 +1058,6 @@ function pintarCabecera() {
   for (const r of document.querySelectorAll('input[name="modelo"]')) r.disabled = ocupado;
   $('#idioma').disabled = ocupado;
   $('#vocabulario').disabled = ocupado;
-  zona.disabled = !S.wasmOk;
 }
 
 $('#items').addEventListener('click', (e) => {
