@@ -1,0 +1,1097 @@
+<title>Audio a TXT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<style>
+/* Una columna de trabajo: ajustes, zona para soltar audios y una pila de hojas de
+   taquigrafía (renglones verdes y margen rojo) donde va apareciendo el texto. */
+:root {
+  --papel: #edf1ea;
+  --superficie: #fafbf8;
+  --hoja: #f6f9ef;
+  --renglon: #cfdfca;
+  --tinta: #17201b;
+  --tenue: #56645c;
+  --borde: #ccd6cb;
+  --acento: #2344c4;
+  --acento-suave: #e2e7fb;
+  --sobre-acento: #ffffff;
+  --margen: #d0533f;
+  --ok: #2c744a;
+  --aviso: #8f5d00;
+  --error: #b42318;
+  --f-titulo: "Familjen Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --f-texto: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --f-dato: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --alto-renglon: 28px;
+  --ancho-margen: 64px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --papel: #0e1311; --superficie: #151b18; --hoja: #17201b; --renglon: #24302a;
+    --tinta: #e3eae5; --tenue: #93a39a; --borde: #2a3530; --acento: #8fa3ff;
+    --acento-suave: #1d2546; --sobre-acento: #0e1311; --margen: #e07a62;
+    --ok: #6cc08d; --aviso: #e2b250; --error: #f2877a; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --papel: #0e1311; --superficie: #151b18; --hoja: #17201b; --renglon: #24302a;
+  --tinta: #e3eae5; --tenue: #93a39a; --borde: #2a3530; --acento: #8fa3ff;
+  --acento-suave: #1d2546; --sobre-acento: #0e1311; --margen: #e07a62;
+  --ok: #6cc08d; --aviso: #e2b250; --error: #f2877a; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--papel);
+  color: var(--tinta);
+  font: 400 16px/1.5 var(--f-titulo);
+  -webkit-font-smoothing: antialiased;
+}
+.app {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 40px 20px 64px;
+  display: grid;
+  gap: 28px;
+}
+@media (max-width: 520px) { .app { padding: 24px 16px 48px; gap: 22px; } }
+
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; }
+
+/* cabecera */
+.sobre {
+  margin: 0 0 10px;
+  font: 500 12px/1 var(--f-dato);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--tenue);
+}
+h1 {
+  margin: 0;
+  font: 700 clamp(2.4rem, 7vw, 3.6rem)/1 var(--f-titulo);
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+h1 span { color: var(--acento); }
+.lema { margin: 14px 0 0; max-width: 60ch; color: var(--tenue); font-size: 1.05rem; text-wrap: pretty; }
+
+/* ajustes */
+.ajustes {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 16px 20px;
+  align-items: end;
+}
+.ajustes .ancho { grid-column: 1 / -1; }
+@media (max-width: 640px) { .ajustes { grid-template-columns: minmax(0, 1fr); } }
+.campo { display: grid; gap: 6px; min-width: 0; }
+.etiqueta { font-size: 13px; font-weight: 600; color: var(--tenue); }
+.opcional { font-weight: 400; }
+.segmentos {
+  display: inline-flex;
+  height: 44px;
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  background: var(--superficie);
+  padding: 3px;
+  gap: 3px;
+}
+.segmentos label { position: relative; display: flex; }
+.segmentos input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.segmentos span {
+  display: flex; gap: 8px; align-items: center;
+  padding: 0 14px;
+  border-radius: 6px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.segmentos small { font: 400 12px var(--f-dato); color: var(--tenue); }
+.segmentos input:checked + span { background: var(--acento); color: var(--sobre-acento); }
+.segmentos input:checked + span small { color: inherit; opacity: .8; }
+.segmentos input:focus-visible + span { outline: 2px solid var(--acento); outline-offset: 2px; }
+.segmentos input:disabled + span { opacity: .55; }
+select, input[type="text"] {
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  background: var(--superficie);
+}
+input[type="text"]::placeholder { color: var(--tenue); opacity: .8; }
+.casilla { display: inline-flex; gap: 10px; align-items: center; font-weight: 500; cursor: pointer; }
+.casilla input { width: 18px; height: 18px; accent-color: var(--acento); margin: 0; }
+.nota-ajustes { margin: 0; font-size: 13px; color: var(--tenue); }
+
+/* zona de entrada */
+.zona {
+  width: 100%;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 34px 20px 30px;
+  border: 1.5px dashed color-mix(in srgb, var(--acento) 45%, var(--borde));
+  border-radius: 12px;
+  background: var(--superficie);
+  text-align: center;
+  transition: background .15s, border-color .15s;
+}
+.zona:hover, .zona.encima { background: var(--acento-suave); border-color: var(--acento); }
+.zona:disabled { cursor: not-allowed; opacity: .6; }
+.zona svg { width: 168px; height: 40px; color: var(--acento); }
+.zona strong { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.01em; }
+.zona .formatos { font: 400 12px/1.5 var(--f-dato); color: var(--tenue); }
+
+/* estado del motor */
+.estado {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 4px 12px;
+  align-items: center;
+  font-size: 14px;
+  color: var(--tenue);
+}
+.estado .punto { width: 10px; height: 10px; border-radius: 50%; background: var(--borde); }
+.estado[data-fase="trabajando"] .punto, .estado[data-fase="descargando"] .punto, .estado[data-fase="preparando"] .punto { background: var(--acento); animation: latido 1.2s ease-in-out infinite; }
+.estado[data-fase="listo"] .punto { background: var(--ok); }
+.estado[data-fase="error"] .punto { background: var(--error); }
+.estado[data-fase="error"] { color: var(--error); }
+.estado .barra { grid-column: 2; }
+@keyframes latido { 50% { opacity: .35; } }
+
+.barra { height: 4px; border-radius: 2px; background: var(--borde); overflow: hidden; }
+.barra span { display: block; height: 100%; width: 0; background: var(--acento); transition: width .3s; }
+
+/* lista */
+.lista-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+h2 { margin: 0; font-size: 1.35rem; font-weight: 700; letter-spacing: -0.015em; }
+h2 small { font: 400 13px var(--f-dato); color: var(--tenue); margin-left: 6px; }
+.acciones { display: flex; flex-wrap: wrap; gap: 8px; }
+.boton {
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1px solid var(--borde);
+  background: var(--superficie);
+  font-weight: 600;
+  font-size: 14px;
+  white-space: nowrap;
+}
+.boton:hover:not(:disabled) { border-color: var(--acento); color: var(--acento); }
+.boton.primario { background: var(--acento); border-color: var(--acento); color: var(--sobre-acento); }
+.boton.primario:hover:not(:disabled) { color: var(--sobre-acento); filter: brightness(1.08); }
+.boton:disabled { opacity: .45; cursor: not-allowed; }
+.boton.discreto { border-color: transparent; background: none; color: var(--tenue); padding: 0 8px; }
+
+#items { list-style: none; margin: 0; padding: 0; display: grid; gap: 18px; }
+.vacio { margin: 0; padding: 18px 0; color: var(--tenue); border-top: 1px solid var(--borde); }
+
+.item {
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  background: var(--superficie);
+  overflow: hidden;
+}
+.item-cab {
+  display: flex;
+  gap: 10px 14px;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 14px 16px 12px;
+}
+.item-titulo { min-width: 0; display: grid; gap: 2px; }
+.nombre { font-weight: 700; overflow-wrap: anywhere; }
+.meta { font: 400 12px/1.5 var(--f-dato); color: var(--tenue); font-variant-numeric: tabular-nums; }
+.chip {
+  flex: none;
+  font: 500 12px/1 var(--f-dato);
+  padding: 6px 9px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.chip[data-tono="trabajo"] { color: var(--acento); }
+.chip[data-tono="ok"] { color: var(--ok); }
+.chip[data-tono="aviso"] { color: var(--aviso); }
+.chip[data-tono="error"] { color: var(--error); }
+.chip[data-tono="tenue"] { color: var(--tenue); }
+.item .barra { margin: 0 16px 12px; }
+.mensaje { margin: 0 16px 14px; font-size: 14px; color: var(--error); }
+
+/* hoja de taquigrafía */
+.hoja {
+  margin: 0;
+  max-height: calc(var(--alto-renglon) * 12 + 16px);
+  overflow: auto;
+  padding: 8px 16px 8px 0;
+  border-top: 1px solid var(--borde);
+  background-color: var(--hoja);
+  background-image:
+    linear-gradient(to right, transparent calc(var(--ancho-margen) - 1px), var(--margen) calc(var(--ancho-margen) - 1px), var(--margen) var(--ancho-margen), transparent var(--ancho-margen)),
+    repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--alto-renglon) - 1px), var(--renglon) calc(var(--alto-renglon) - 1px), var(--renglon) var(--alto-renglon));
+  background-position: 0 0, 0 8px;
+  background-attachment: local;
+  font: 400 16px/var(--alto-renglon) var(--f-texto);
+  font-optical-sizing: auto;
+}
+.renglon { display: grid; grid-template-columns: var(--ancho-margen) minmax(0, 1fr); margin: 0; }
+.renglon time {
+  padding-right: 10px;
+  text-align: right;
+  font: 400 11px/var(--alto-renglon) var(--f-dato);
+  color: var(--tenue);
+  font-variant-numeric: tabular-nums;
+}
+.renglon span { padding-left: 12px; overflow-wrap: anywhere; }
+.renglon.pendiente span { color: var(--tenue); font-style: italic; }
+.renglon.silencio span { color: var(--tenue); }
+.item-pie {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 12px;
+  border-top: 1px solid var(--borde);
+}
+.item-pie .espacio { flex: 1; }
+.nota-ejemplo { font-size: 13px; color: var(--tenue); padding-left: 4px; }
+
+.aviso-flotante {
+  position: fixed;
+  left: 50%;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  max-width: min(92vw, 520px);
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: var(--tinta);
+  color: var(--papel);
+  font-size: 14px;
+  box-shadow: 0 6px 24px rgb(0 0 0 / .2);
+}
+
+.pie { margin: 0; color: var(--tenue); font-size: 14px; max-width: 70ch; display: grid; gap: 8px; }
+.pie p { margin: 0; }
+.pie strong { color: var(--tinta); font-weight: 600; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+</style>
+
+<main class="app">
+  <header>
+    <p class="sobre">Whisper · corre en tu navegador</p>
+    <h1>Audio a <span>TXT</span></h1>
+    <p class="lema">Sube uno o varios audios de hasta 50 MB. Se transcriben aquí mismo, sin enviar el audio a ningún servidor, y te llevas el texto en un archivo .txt.</p>
+  </header>
+
+  <section class="ajustes" aria-label="Ajustes">
+    <div class="campo">
+      <span class="etiqueta" id="etq-modelo">Modelo</span>
+      <div class="segmentos" role="radiogroup" aria-labelledby="etq-modelo">
+        <label><input type="radio" name="modelo" id="modelo-base" value="base" checked><span>Preciso <small>80 MB</small></span></label>
+        <label><input type="radio" name="modelo" id="modelo-tiny" value="tiny"><span>Rápido <small>43 MB</small></span></label>
+      </div>
+    </div>
+    <div class="campo">
+      <label class="etiqueta" for="idioma">Idioma del audio</label>
+      <select id="idioma">
+        <option value="es" selected>Español</option>
+        <option value="auto">Detectar automáticamente</option>
+        <option value="en">Inglés</option>
+        <option value="pt">Portugués</option>
+        <option value="fr">Francés</option>
+        <option value="it">Italiano</option>
+        <option value="de">Alemán</option>
+        <option value="ca">Catalán</option>
+      </select>
+    </div>
+    <div class="campo ancho">
+      <label class="etiqueta" for="vocabulario">Nombres y términos que aparecen <span class="opcional">(opcional, ayuda a escribirlos bien)</span></label>
+      <input type="text" id="vocabulario" placeholder="p. ej. opioides, receptor kappa, Dra. Méndez" autocomplete="off">
+    </div>
+    <label class="casilla ancho"><input type="checkbox" id="marcas"> Incluir marcas de tiempo en el .txt</label>
+  </section>
+
+  <section aria-label="Añadir audios">
+    <input type="file" id="archivos" multiple hidden accept="audio/*,video/mp4,video/webm,.mp3,.m4a,.wav,.ogg,.oga,.opus,.flac,.aac,.weba,.webm,.mp4">
+    <button type="button" class="zona" id="zona">
+      <svg viewBox="0 0 168 40" aria-hidden="true"><g fill="currentColor" id="onda"></g></svg>
+      <strong>Arrastra los audios aquí</strong>
+      <span>o haz clic para elegirlos (puedes elegir varios)</span>
+      <span class="formatos">MP3 · M4A · WAV · OGG · OPUS · FLAC · WEBM — hasta 50 MB cada uno</span>
+    </button>
+  </section>
+
+  <div class="estado" id="estado" data-fase="inactivo" role="status" aria-live="polite">
+    <span class="punto"></span>
+    <span id="estado-texto">El modelo se descarga la primera vez que transcribes y queda guardado en este navegador.</span>
+    <div class="barra" id="estado-barra" hidden><span></span></div>
+  </div>
+
+  <section aria-labelledby="titulo-lista">
+    <div class="lista-cabecera">
+      <h2 id="titulo-lista">Transcripciones <small id="contador"></small></h2>
+      <div class="acciones">
+        <button type="button" class="boton" id="detener" hidden>Detener</button>
+        <button type="button" class="boton primario" id="descargar-todo" disabled>Descargar todo (.txt)</button>
+      </div>
+    </div>
+    <ol id="items"></ol>
+  </section>
+
+  <footer class="pie">
+    <p><strong>Cómo funciona.</strong> Cada audio se corta en tramos de hasta 30 segundos por sus silencios y Whisper los transcribe en tu equipo, con varios motores en paralelo si el procesador lo permite. El modelo Preciso (Whisper base) es el recomendado para español; el Rápido (Whisper tiny) tarda la mitad pero se equivoca más.</p>
+    <p><strong>Cuánto tarda.</strong> Depende del equipo: en un portátil normal, una hora de audio suele llevar entre 10 y 30 minutos con el modelo Preciso. Puedes seguir usando la pestaña mientras tanto.</p>
+  </footer>
+</main>
+<div class="aviso-flotante" id="aviso" role="status" aria-live="polite" hidden></div>
+
+<script type="module">
+const LIMITE = 50 * 1024 * 1024;
+const CACHE = 'audio-a-txt-v1';
+const IDIOMAS = { es: 'español', en: 'inglés', pt: 'portugués', fr: 'francés', it: 'italiano', de: 'alemán', ca: 'catalán' };
+const NOMBRE_MODELO = { base: 'Preciso', tiny: 'Rápido' };
+const EXTENSIONES = /\.(mp3|m4a|wav|ogg|oga|opus|flac|aac|weba|webm|mp4|mpga|mpeg)$/i;
+
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+// ---------- estado ----------
+const S = {
+  items: [],
+  siguienteId: 1,
+  motores: [],          // { w, listo, bloque }
+  modelo: null,         // modelo cargado en los motores
+  preparando: null,     // promesa de carga en curso
+  bloques: [],          // cola de bloques pendientes
+  leyendo: false,
+  errorMotor: null,
+  inicio: null,         // para medir velocidad
+  audioHecho: 0,
+  wasmOk: true,
+};
+
+// Un resultado real del modelo Preciso sobre una narración de 65 s, para que se vea el formato
+const EJEMPLO = {
+  id: 0, ejemplo: true, nombre: 'narracion-opioides.m4a', tam: 1050114, duracion: 64.6, estado: 'listo', idioma: 'es',
+  tramos: [
+    { ini: 0, fin: 22.1, hecho: true, texto: 'Hoy hablaremos de medicamentos. En principal hablaremos de los opióides, porque es un grupo farmacológico muy interesante que actúa sobre el sistema nervioso en ciertos receptores del cérebro que ya veremos más adelante.' },
+    { ini: 22.1, fin: 49.8, hecho: true, texto: '¿Qué es un opióides? Bueno, un opióide es una serie de moléculas las cuales tienen una estructura específica que pardon, que pardon de un grupo familiar en específico. Entonces, ¿qué hacen o dónde interactúan los opióides? Bueno, los opióides interactúan sobre unos receptores de las neuronas llamados Kappa, Mu,' },
+    { ini: 49.8, fin: 64.6, hecho: true, texto: 'y en esos receptores actúan, actúan al deando el potencial de la acción de premio del sistema nervioso para ejercer su mecanismo terapéutico.' },
+  ],
+};
+S.items.push(EJEMPLO);
+
+// ---------- utilidades ----------
+function hms(s, largo) {
+  s = Math.max(0, Math.round(s));
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), x = s % 60;
+  const p = (n) => String(n).padStart(2, '0');
+  return h || largo ? `${p(h)}:${p(m)}:${p(x)}` : `${p(m)}:${p(x)}`;
+}
+const mb = (b) => (b / 1048576).toLocaleString('es', { maximumFractionDigits: 1, minimumFractionDigits: 1 }) + ' MB';
+function quedan(seg) {
+  if (seg < 60) return 'queda menos de un minuto';
+  const m = Math.round(seg / 60);
+  return m === 1 ? 'queda 1 minuto' : `quedan unos ${m} minutos`;
+}
+
+let temporizadorAviso;
+function avisar(texto) {
+  const a = $('#aviso');
+  a.textContent = texto;
+  a.hidden = false;
+  clearTimeout(temporizadorAviso);
+  temporizadorAviso = setTimeout(() => { a.hidden = true; }, 4200);
+}
+
+// onda decorativa de la zona de entrada
+(() => {
+  const g = $('#onda');
+  let html = '';
+  for (let i = 0; i < 42; i++) {
+    const a = 6 + Math.abs(Math.sin(i * 0.55) * Math.cos(i * 0.21)) * 30;
+    html += `<rect x="${i * 4}" y="${(40 - a) / 2}" width="2" height="${a.toFixed(1)}" rx="1"></rect>`;
+  }
+  g.innerHTML = html;
+})();
+
+// ---------- descargas de archivos del modelo ----------
+async function leer(ruta, avance) {
+  const url = new URL(ruta, location.href).href;
+  let cache = null;
+  try {
+    cache = await caches.open(CACHE);
+    const guardado = await cache.match(url);
+    if (guardado) {
+      const b = new Uint8Array(await guardado.arrayBuffer());
+      avance(b.length);
+      return b;
+    }
+  } catch { cache = null; }
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`No se pudo descargar ${ruta} (error ${r.status}).`);
+  let b;
+  if (r.body) {
+    const trozos = [];
+    let total = 0;
+    const lector = r.body.getReader();
+    for (;;) {
+      const { done, value } = await lector.read();
+      if (done) break;
+      trozos.push(value);
+      total += value.length;
+      avance(value.length);
+    }
+    b = new Uint8Array(total);
+    let o = 0;
+    for (const t of trozos) { b.set(t, o); o += t.length; }
+  } else {
+    b = new Uint8Array(await r.arrayBuffer());
+    avance(b.length);
+  }
+  if (cache) { try { await cache.put(url, new Response(b)); } catch { /* sin espacio: se volverá a descargar */ } }
+  return b;
+}
+
+async function leerPartes(entrada, avance) {
+  const b = new Uint8Array(entrada.size);
+  let o = 0;
+  for (const p of entrada.parts) {
+    const d = await leer(p, avance);
+    b.set(d, o);
+    o += d.length;
+  }
+  return b;
+}
+
+let manifiesto = null;
+
+function cantidadMotores(modelo) {
+  const nucleos = navigator.hardwareConcurrency || 2;
+  const memoria = navigator.deviceMemory || 8;
+  let n = Math.floor(nucleos / 2);
+  if (memoria <= 2) n = 1;
+  else if (memoria <= 4) n = Math.min(n, 2);
+  return Math.max(1, Math.min(n, modelo === 'tiny' ? 4 : 3));
+}
+
+function mensajeMotor(texto) {
+  if (/memory|memoria|allocat|Out of/i.test(texto)) return 'El equipo se quedó sin memoria al preparar el modelo. Cierra otras pestañas o elige el modelo Rápido.';
+  if (/Refused to compile|unsafe-eval|CompileError|WebAssembly/i.test(texto)) return 'Este visor no permite ejecutar WebAssembly, que el transcriptor necesita. Abre la página en Chrome, Edge o Firefox de escritorio.';
+  return 'No se pudo preparar el modelo: ' + texto;
+}
+
+async function prepararMotores(modelo) {
+  if (S.modelo === modelo && S.motores.some((m) => m.listo)) return;
+  if (S.preparando) return S.preparando;
+  S.preparando = (async () => {
+    S.errorMotor = null;
+    for (const m of S.motores) m.w.terminate();
+    S.motores = [];
+    S.modelo = null;
+    if (!manifiesto) {
+      const r = await fetch(new URL('modelos/manifest.json', location.href));
+      if (!r.ok) throw new Error('no se encontró la lista de modelos');
+      manifiesto = await r.json();
+    }
+    const m = manifiesto.models[modelo];
+    const total = manifiesto.wasm.size + m.encoder.size + m.decoder.size + 816730;
+    let cargado = 0, ultimo = 0;
+    const avance = (n) => {
+      cargado += n;
+      const ahora = performance.now();
+      if (ahora - ultimo < 150 && cargado < total) return;
+      ultimo = ahora;
+      estado('descargando', `Descargando el modelo ${NOMBRE_MODELO[modelo]} · ${Math.round(cargado / 1048576)} de ${Math.round(total / 1048576)} MB`, cargado / total);
+    };
+    avance(0);
+    const wasm = await leerPartes(manifiesto.wasm, avance);
+    const tokens = new TextDecoder().decode(await leer('modelos/tokens.txt', avance));
+    const enc = await leerPartes(m.encoder, avance);
+    const dec = await leerPartes(m.decoder, avance);
+
+    const n = cantidadMotores(modelo);
+    estado('preparando', n > 1 ? `Preparando ${n} motores en paralelo…` : 'Preparando el motor…');
+    const iniciados = await Promise.all(Array.from({ length: n }, (_, i) => new Promise((ok) => {
+      let w;
+      try { w = new Worker('motor.js', { type: 'module' }); } catch (e) { ok({ error: String(e?.message || e) }); return; }
+      const motor = { w, listo: false, bloque: null };
+      w.onmessage = (e) => {
+        if (e.data.tipo === 'listo') {
+          motor.listo = true;
+          w.onmessage = (ev) => mensajeDeMotor(motor, ev.data);
+          w.onerror = (ev) => { ev.preventDefault?.(); motorCaido(motor); };
+          ok(motor);
+        }
+        else if (e.data.tipo === 'error') { w.terminate(); ok({ error: e.data.mensaje }); }
+      };
+      w.onerror = (e) => { e.preventDefault?.(); w.terminate(); ok({ error: e.message || 'el motor no arrancó' }); };
+      // el primero se queda con los originales; el resto recibe copias
+      const copia = (b) => (i === n - 1 ? b.buffer : b.slice().buffer);
+      const msg = { tipo: 'iniciar', wasm: copia(wasm), tokens, config: m.config, enc: copia(enc), dec: copia(dec) };
+      w.postMessage(msg, [msg.wasm, msg.enc, msg.dec]);
+    })));
+    S.motores = iniciados.filter((x) => x.w);
+    if (!S.motores.length) throw new Error(iniciados[0]?.error || 'el motor no arrancó');
+    S.modelo = modelo;
+    estado('listo', textoListo());
+  })().catch((e) => {
+    S.errorMotor = mensajeMotor(String(e?.message || e));
+    estado('error', S.errorMotor);
+    for (const it of S.items) if (it.estado === 'cola' || it.estado === 'trabajando') { it.estado = 'error'; it.error = S.errorMotor; }
+    S.bloques = [];
+    pintar();
+  }).finally(() => { S.preparando = null; bombear(); });
+  return S.preparando;
+}
+
+function textoListo() {
+  const n = S.motores.length;
+  return `Modelo ${NOMBRE_MODELO[S.modelo]} listo · ${n === 1 ? '1 motor' : n + ' motores en paralelo'}`;
+}
+
+function estado(fase, texto, fraccion) {
+  const e = $('#estado');
+  e.dataset.fase = fase;
+  $('#estado-texto').textContent = texto;
+  const b = $('#estado-barra');
+  b.hidden = fraccion === undefined;
+  if (fraccion !== undefined) b.firstElementChild.style.width = (fraccion * 100).toFixed(1) + '%';
+}
+
+// ---------- audio ----------
+async function leerAudio(file) {
+  const datos = await file.arrayBuffer();
+  let ab;
+  let ctx;
+  try { ctx = new OfflineAudioContext(1, 1, 16000); } catch { ctx = new OfflineAudioContext(1, 1, 44100); }
+  try {
+    ab = await ctx.decodeAudioData(datos);
+  } catch {
+    throw new Error('No se pudo leer el audio. Puede que el formato no sea compatible con este navegador; prueba a convertirlo a MP3 o WAV.');
+  }
+  const n = ab.length;
+  let mono = new Float32Array(n);
+  for (let c = 0; c < ab.numberOfChannels; c++) {
+    const d = ab.getChannelData(c);
+    for (let i = 0; i < n; i++) mono[i] += d[i];
+  }
+  if (ab.numberOfChannels > 1) for (let i = 0; i < n; i++) mono[i] /= ab.numberOfChannels;
+  if (ab.sampleRate !== 16000) mono = remuestrear(mono, ab.sampleRate);
+  return mono;
+}
+
+// promedio por ventana (filtro simple contra el aliasing) e interpolación lineal
+function remuestrear(x, sr) {
+  const r = sr / 16000;
+  const n = Math.floor(x.length / r);
+  const y = new Float32Array(n);
+  const a = Math.max(1, Math.round(r));
+  const acum = new Float64Array(x.length + 1);
+  for (let i = 0; i < x.length; i++) acum[i + 1] = acum[i] + x[i];
+  for (let i = 0; i < n; i++) {
+    const c = i * r;
+    const ini = Math.max(0, Math.floor(c - a / 2)), fin = Math.min(x.length, ini + a);
+    y[i] = (acum[fin] - acum[ini]) / (fin - ini);
+  }
+  return y;
+}
+
+// Tramos de hasta 30 s que terminan en el punto más silencioso entre los 20 y los 30 s
+function planificar(pcm) {
+  const FR = 160;
+  const n = Math.floor(pcm.length / FR);
+  if (n === 0) return pcm.length ? [{ ini: 0, fin: pcm.length, silencio: true }] : [];
+  const energia = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    let s = 0;
+    for (let j = i * FR, e = j + FR; j < e; j++) s += pcm[j] * pcm[j];
+    energia[i] = Math.sqrt(s / FR);
+  }
+  const acum = new Float64Array(n + 1);
+  for (let i = 0; i < n; i++) acum[i + 1] = acum[i] + energia[i];
+  const suave = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const a = Math.max(0, i - 15), b = Math.min(n, i + 15);
+    suave[i] = (acum[b] - acum[a]) / (b - a);
+  }
+  const orden = Float32Array.from(suave).sort();
+  const umbral = Math.max(0.002, 0.06 * orden[Math.floor(0.98 * (n - 1))]);
+  const tramos = [];
+  for (let s = 0; s < n;) {
+    let fin = n;
+    if (n - s > 3000) {
+      let e = Infinity;
+      fin = s + 3000;
+      for (let f = s + 2000; f < s + 3000; f++) if (suave[f] < e) { e = suave[f]; fin = f; }
+    }
+    let pico = 0;
+    for (let f = s; f < fin; f++) if (suave[f] > pico) pico = suave[f];
+    tramos.push({ ini: s * FR, fin: fin === n ? pcm.length : fin * FR, silencio: pico < umbral });
+    s = fin;
+  }
+  return tramos;
+}
+
+// ---------- planificador ----------
+async function prepararArchivo(it) {
+  it.ronda = (it.ronda || 0) + 1;
+  it.clave = `${it.id}.${it.ronda}`;
+  it.estado = 'leyendo';
+  pintarItem(it);
+  try {
+    const pcm = await leerAudio(it.file);
+    it.duracion = pcm.length / 16000;
+    if (it.duracion < 0.2) throw new Error('El audio está vacío o dura menos de un segundo.');
+    const plan = planificar(pcm);
+    it.tramos = plan.map((t) => ({ ini: t.ini / 16000, fin: t.fin / 16000, silencio: t.silencio, hecho: false, texto: '' }));
+    it.estado = 'trabajando';
+    it.t0 = performance.now();
+    // bloques de tramos consecutivos, uno por motor (al menos 4 tramos con voz en cada uno,
+    // para que el contexto entre tramos ayude)
+    const conVoz = plan.filter((t) => !t.silencio).length;
+    it.bloquesPendientes = 0;
+    if (!conVoz) {
+      for (const t of it.tramos) t.hecho = true;
+      return;
+    }
+    const nBloques = Math.max(1, Math.min(S.motores.length || 1, Math.ceil(conVoz / 4)));
+    const porBloque = conVoz / nBloques;
+    let inicio = 0, vistos = 0;
+    for (let b = 0; b < nBloques; b++) {
+      let fin = inicio;
+      const meta = Math.round(porBloque * (b + 1));
+      while (fin < plan.length && (b === nBloques - 1 || vistos < meta)) { if (!plan[fin].silencio) vistos++; fin++; }
+      if (fin === inicio) continue;
+      const base = plan[inicio].ini;
+      const pcmBloque = pcm.slice(base, plan[fin - 1].fin);
+      S.bloques.push({
+        archivo: it.clave,
+        pcm: pcmBloque,
+        tramos: plan.slice(inicio, fin).map((t, k) => ({ i: inicio + k, ini: t.ini - base, fin: t.fin - base, silencio: t.silencio })),
+        idioma: it.ajustes.idioma,
+        vocabulario: it.ajustes.vocabulario,
+      });
+      it.bloquesPendientes++;
+      inicio = fin;
+    }
+  } catch (e) {
+    it.estado = 'error';
+    it.error = String(e?.message || e);
+  } finally {
+    pintarItem(it);
+  }
+}
+
+function hayTrabajo() {
+  return S.items.some((it) => it.estado === 'cola' || it.estado === 'leyendo' || it.estado === 'trabajando');
+}
+
+async function bombear() {
+  // terminar archivos sin bloques pendientes
+  for (const it of S.items) {
+    if (it.estado === 'trabajando' && it.bloquesPendientes === 0 && !S.bloques.some((b) => b.archivo === it.clave)) {
+      it.estado = 'listo';
+      it.t1 = performance.now();
+      pintarItem(it);
+    }
+  }
+  const pendiente = S.items.find((it) => it.estado === 'cola');
+  if (!hayTrabajo()) {
+    S.inicio = null;
+    S.audioHecho = 0;
+    if (S.modelo && !S.errorMotor) estado('listo', textoListo());
+    pintarCabecera();
+    return;
+  }
+  if (S.errorMotor && !S.preparando) return;
+  const modelo = (S.items.find((it) => it.estado === 'cola' || it.estado === 'trabajando')?.ajustes.modelo) || leerAjustes().modelo;
+  if (S.modelo !== modelo || !S.motores.length) {
+    if (S.items.some((it) => it.estado === 'trabajando')) { /* espera a que acaben */ }
+    else { prepararMotores(modelo); return; }
+  }
+  if (S.preparando) return;
+  // leer el siguiente archivo cuando la cola de bloques se queda corta
+  const libres = S.motores.filter((m) => m.listo && !m.bloque).length;
+  if (pendiente && !S.leyendo && S.bloques.length < Math.max(1, libres)) {
+    if (pendiente.ajustes.modelo === S.modelo) {
+      S.leyendo = true;
+      prepararArchivo(pendiente).finally(() => { S.leyendo = false; bombear(); });
+    }
+  }
+  for (const m of S.motores) {
+    if (!m.listo || m.bloque || !S.bloques.length) continue;
+    const b = S.bloques.shift();
+    m.bloque = b;
+    const it = S.items.find((x) => x.clave === b.archivo);
+    if (!S.inicio) {
+      S.inicio = performance.now();
+      const n = S.motores.length;
+      estado('trabajando', `Transcribiendo con ${n === 1 ? '1 motor' : n + ' motores en paralelo'}…`);
+    }
+    m.w.postMessage({ tipo: 'bloque', archivo: b.archivo, pcm: b.pcm, tramos: b.tramos, idioma: b.idioma, vocabulario: b.vocabulario }, [b.pcm.buffer]);
+    b.pcm = null;
+    if (it) pintarItem(it);
+  }
+  pintarCabecera();
+  actualizarVelocidad();
+}
+
+function mensajeDeMotor(motor, m) {
+  const it = S.items.find((x) => x.clave === m.archivo);
+  if (m.tipo === 'tramo') {
+    if (it && it.tramos[m.i]) {
+      const t = it.tramos[m.i];
+      t.texto = m.texto;
+      t.hecho = true;
+      if (m.idioma && !it.idioma) it.idioma = m.idioma;
+      if (!t.silencio) S.audioHecho += t.fin - t.ini;
+      if (it.estado === 'trabajando') pintarItem(it);
+      actualizarVelocidad();
+    }
+    return;
+  }
+  motor.bloque = null;
+  if (m.tipo === 'bloque-fin' || m.tipo === 'cancelado') {
+    if (it) it.bloquesPendientes = Math.max(0, (it.bloquesPendientes || 1) - 1);
+  } else if (m.tipo === 'error') {
+    if (it) {
+      it.bloquesPendientes = Math.max(0, (it.bloquesPendientes || 1) - 1);
+      detenerArchivo(it, 'error', 'Falló la transcripción: ' + m.mensaje);
+    }
+  }
+  bombear();
+}
+
+// un motor que muere (normalmente por falta de memoria) se retira y su archivo queda con error
+function motorCaido(motor) {
+  motor.w.terminate();
+  S.motores = S.motores.filter((m) => m !== motor);
+  const it = motor.bloque && S.items.find((x) => x.clave === motor.bloque.archivo);
+  motor.bloque = null;
+  if (it) {
+    it.bloquesPendientes = Math.max(0, (it.bloquesPendientes || 1) - 1);
+    detenerArchivo(it, 'error', 'Un motor se detuvo a mitad, probablemente por falta de memoria. Vuelve a intentarlo o usa el modelo Rápido.');
+  }
+  if (!S.motores.length) S.modelo = null;
+  bombear();
+}
+
+function actualizarVelocidad() {
+  if (!S.inicio || !S.audioHecho || !hayTrabajo() || S.preparando) return;
+  const vel = S.audioHecho / ((performance.now() - S.inicio) / 1000);
+  let restante = 0;
+  for (const it of S.items) {
+    if (it.estado === 'trabajando') for (const t of it.tramos) if (!t.hecho && !t.silencio) restante += t.fin - t.ini;
+    if (it.estado === 'cola') restante += it.tam / (/\.(wav|flac)$/i.test(it.nombre) ? 100000 : 16000);
+  }
+  const n = S.motores.length;
+  estado('trabajando', `Transcribiendo con ${n === 1 ? '1 motor' : n + ' motores'} · ${vel.toLocaleString('es', { maximumFractionDigits: 1 })}× la velocidad del audio · ${quedan(restante / vel)}`);
+}
+
+function detenerArchivo(it, estadoFinal, mensaje) {
+  S.bloques = S.bloques.filter((b) => b.archivo !== it.clave);
+  for (const m of S.motores) if (m.bloque?.archivo === it.clave) m.w.postMessage({ tipo: 'cancelar' });
+  it.estado = estadoFinal;
+  if (mensaje) it.error = mensaje;
+  pintarItem(it);
+}
+
+// ---------- entrada de archivos ----------
+function leerAjustes() {
+  return {
+    modelo: document.querySelector('input[name="modelo"]:checked').value,
+    idioma: $('#idioma').value,
+    vocabulario: $('#vocabulario').value.trim().slice(0, 300),
+  };
+}
+
+function agregar(lista) {
+  const archivos = Array.from(lista || []);
+  if (!archivos.length) return;
+  const i = S.items.indexOf(EJEMPLO);
+  if (i >= 0) S.items.splice(i, 1);
+  const ajustes = leerAjustes();
+  S.errorMotor = null;
+  for (const file of archivos) {
+    const it = { id: S.siguienteId++, file, nombre: file.name, tam: file.size, estado: 'cola', tramos: [], ajustes: { ...ajustes } };
+    const esAudio = /^(audio|video)\//.test(file.type) || EXTENSIONES.test(file.name);
+    if (!esAudio) { it.estado = 'rechazado'; it.error = 'No parece un archivo de audio.'; it.file = null; }
+    else if (file.size > LIMITE) { it.estado = 'rechazado'; it.error = `Pesa ${mb(file.size)}; el límite es 50 MB por archivo.`; it.file = null; }
+    S.items.push(it);
+  }
+  pintar();
+  bombear();
+}
+
+const zona = $('#zona');
+zona.addEventListener('click', () => $('#archivos').click());
+$('#archivos').addEventListener('change', (e) => { agregar(e.target.files); e.target.value = ''; });
+for (const ev of ['dragenter', 'dragover']) {
+  document.addEventListener(ev, (e) => {
+    if (!e.dataTransfer?.types?.includes('Files')) return;
+    e.preventDefault();
+    zona.classList.add('encima');
+  });
+}
+document.addEventListener('dragleave', (e) => { if (!e.relatedTarget) zona.classList.remove('encima'); });
+document.addEventListener('drop', (e) => {
+  if (!e.dataTransfer?.files?.length) return;
+  e.preventDefault();
+  zona.classList.remove('encima');
+  if (!zona.disabled) agregar(e.dataTransfer.files);
+});
+
+// ---------- texto de salida ----------
+function textoDe(it, conMarcas) {
+  const partes = it.tramos.filter((t) => t.texto);
+  if (conMarcas) return partes.map((t) => `[${hms(t.ini, true)}] ${t.texto}`).join('\n');
+  let s = '';
+  for (const t of partes) {
+    if (!s) s = t.texto;
+    else s += (/[.?!…»"”)]$/.test(s) ? '\n\n' : ' ') + t.texto;
+  }
+  return s;
+}
+
+function cabeceraDe(it) {
+  const datos = [it.nombre, hms(it.duracion || 0, true)];
+  if (it.idioma && IDIOMAS[it.idioma]) datos.push(IDIOMAS[it.idioma]);
+  return datos.join(' · ');
+}
+
+function nombreTxt(nombre) {
+  return (nombre.replace(/\.[^.]+$/, '') || 'transcripcion') + '.txt';
+}
+
+function textoCombinado(lista, conMarcas) {
+  const fecha = new Date().toLocaleDateString('es', { day: 'numeric', month: 'long', year: 'numeric' });
+  const raya = '='.repeat(60);
+  let s = `Transcripciones · ${fecha}\n${lista.length === 1 ? '1 archivo' : lista.length + ' archivos'} · Whisper ${lista[0]?.ajustes?.modelo || 'base'}, transcrito en el navegador\n`;
+  for (const it of lista) {
+    s += `\n${raya}\n${cabeceraDe(it)}${it.estado !== 'listo' ? ' · incompleta' : ''}\n${raya}\n\n${textoDe(it, conMarcas) || '(sin voz detectada)'}\n`;
+  }
+  return s;
+}
+
+let descargas = null;
+const descargasListas = (async () => {
+  try { descargas = window.claude?.use ? await window.claude.use('downloads') : null; } catch { descargas = null; }
+})();
+
+async function guardar(nombre, texto) {
+  await descargasListas;
+  if (descargas) {
+    try {
+      await descargas.save({ filename: nombre, data: texto });
+      avisar(`Guardado: ${nombre}`);
+    } catch (e) {
+      if (e?.code === 'declined') return;
+      if (e?.code === 'rate_limited') avisar('Ya hay una descarga esperando tu confirmación.');
+      else avisar('No se pudo guardar el archivo aquí. Usa «Copiar» y pégalo en un documento.');
+    }
+    return;
+  }
+  const url = URL.createObjectURL(new Blob([texto], { type: 'text/plain;charset=utf-8' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = nombre;
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+async function copiar(it, boton) {
+  const texto = textoDe(it, $('#marcas').checked);
+  try {
+    await navigator.clipboard.writeText(texto);
+    avisar('Texto copiado.');
+  } catch {
+    const hoja = boton.closest('.item').querySelector('.hoja');
+    const r = document.createRange();
+    r.selectNodeContents(hoja);
+    const sel = getSelection();
+    sel.removeAllRanges();
+    sel.addRange(r);
+    avisar('Texto seleccionado: pulsa Ctrl+C (o ⌘+C) para copiarlo.');
+  }
+}
+
+// ---------- pintado ----------
+function chipDe(it) {
+  switch (it.estado) {
+    case 'cola': return ['En cola', 'tenue'];
+    case 'leyendo': return ['Leyendo audio', 'trabajo'];
+    case 'trabajando': {
+      const conVoz = it.tramos.filter((t) => !t.silencio);
+      const hechos = conVoz.filter((t) => t.hecho).length;
+      return [`Transcribiendo ${conVoz.length ? Math.round((hechos / conVoz.length) * 100) : 0} %`, 'trabajo'];
+    }
+    case 'listo': return it.ejemplo ? ['Ejemplo', 'tenue'] : ['Lista', 'ok'];
+    case 'detenido': return ['Detenida', 'aviso'];
+    case 'rechazado': return ['No admitido', 'error'];
+    default: return ['Error', 'error'];
+  }
+}
+
+function htmlItem(it) {
+  const [chip, tono] = chipDe(it);
+  const meta = [mb(it.tam)];
+  if (it.duracion) meta.push(hms(it.duracion));
+  if (it.idioma) meta.push(IDIOMAS[it.idioma] || it.idioma);
+  if (it.estado === 'listo' && it.t1 && it.t0) meta.push(`hecha en ${hms((it.t1 - it.t0) / 1000)}`);
+  const conVoz = it.tramos.filter((t) => !t.silencio);
+  const fraccion = conVoz.length ? conVoz.filter((t) => t.hecho).length / conVoz.length : 0;
+  let hoja = '';
+  if (it.tramos.length) {
+    const filas = [];
+    let hueco = null;
+    const cerrarHueco = () => {
+      if (hueco) filas.push(`<p class="renglon pendiente"><time>${hms(hueco.ini)}</time><span>Transcribiendo ${hms(hueco.ini)}–${hms(hueco.fin)}…</span></p>`);
+      hueco = null;
+    };
+    for (const t of it.tramos) {
+      if (!t.hecho && !t.silencio && it.estado === 'trabajando') {
+        if (hueco) hueco.fin = t.fin; else hueco = { ini: t.ini, fin: t.fin };
+        continue;
+      }
+      if (t.hecho && t.texto) {
+        cerrarHueco();
+        filas.push(`<p class="renglon"><time>${hms(t.ini)}</time><span>${esc(t.texto)}</span></p>`);
+      }
+    }
+    cerrarHueco();
+    if (!filas.length && it.tramos.every((t) => t.hecho)) filas.push('<p class="renglon silencio"><time></time><span>No se detectó voz en este audio.</span></p>');
+    hoja = `<div class="hoja" tabindex="0" aria-label="Transcripción de ${esc(it.nombre)}">${filas.join('')}</div>`;
+  }
+  const tieneTexto = it.tramos.some((t) => t.texto);
+  let pie = '';
+  if (it.ejemplo) {
+    pie = `<span class="nota-ejemplo">Así queda una transcripción. Desaparece cuando añades tus audios.</span><span class="espacio"></span><button type="button" class="boton discreto" data-accion="quitar">Quitar ejemplo</button>`;
+  } else {
+    const botones = [];
+    if (tieneTexto && it.estado !== 'trabajando') {
+      botones.push('<button type="button" class="boton" data-accion="copiar">Copiar</button>');
+      botones.push(`<button type="button" class="boton" data-accion="descargar">Descargar .txt</button>`);
+    }
+    if (it.estado === 'trabajando' || it.estado === 'leyendo' || it.estado === 'cola') botones.push('<button type="button" class="boton" data-accion="detener">Detener</button>');
+    if ((it.estado === 'detenido' || it.estado === 'error') && it.file) botones.push('<button type="button" class="boton" data-accion="reintentar">Volver a transcribir</button>');
+    botones.push('<span class="espacio"></span>');
+    if (it.estado !== 'trabajando' && it.estado !== 'leyendo') botones.push('<button type="button" class="boton discreto" data-accion="quitar">Quitar</button>');
+    pie = botones.join('');
+  }
+  return `
+    <div class="item-cab">
+      <div class="item-titulo"><span class="nombre">${esc(it.nombre)}</span><span class="meta">${meta.join(' · ')}</span></div>
+      <span class="chip" data-tono="${tono}">${chip}</span>
+    </div>
+    ${it.estado === 'trabajando' || it.estado === 'leyendo' ? `<div class="barra"><span style="width:${(fraccion * 100).toFixed(1)}%"></span></div>` : ''}
+    ${it.error ? `<p class="mensaje">${esc(it.error)}</p>` : ''}
+    ${hoja}
+    <div class="item-pie">${pie}</div>`;
+}
+
+function pintarItem(it) {
+  const li = document.querySelector(`.item[data-id="${it.id}"]`);
+  if (!li) { pintar(); return; }
+  const hojaVieja = li.querySelector('.hoja');
+  const pegada = hojaVieja && hojaVieja.scrollHeight - hojaVieja.scrollTop - hojaVieja.clientHeight < 40;
+  const scroll = hojaVieja?.scrollTop || 0;
+  li.innerHTML = htmlItem(it);
+  const hoja = li.querySelector('.hoja');
+  if (hoja) hoja.scrollTop = pegada && it.estado === 'trabajando' ? hoja.scrollHeight : scroll;
+  pintarCabecera();
+}
+
+function pintar() {
+  const ol = $('#items');
+  if (!S.items.length) {
+    ol.innerHTML = '<li class="vacio">Aún no hay audios. Añade uno arriba y la transcripción aparecerá aquí mientras se hace.</li>';
+  } else {
+    ol.innerHTML = S.items.map((it) => `<li class="item" data-id="${it.id}">${htmlItem(it)}</li>`).join('');
+  }
+  pintarCabecera();
+}
+
+function terminados() {
+  return S.items.filter((it) => !it.ejemplo && it.tramos.some((t) => t.texto) && (it.estado === 'listo' || it.estado === 'detenido'));
+}
+
+function pintarCabecera() {
+  const reales = S.items.filter((it) => !it.ejemplo);
+  const listos = terminados();
+  $('#contador').textContent = reales.length ? `${listos.length} de ${reales.length} listas` : '';
+  const boton = $('#descargar-todo');
+  boton.disabled = !listos.length;
+  boton.textContent = listos.length > 1 ? `Descargar las ${listos.length} en un .txt` : 'Descargar .txt';
+  if (!listos.length) boton.textContent = 'Descargar todo (.txt)';
+  $('#detener').hidden = !hayTrabajo();
+  const ocupado = hayTrabajo();
+  for (const r of document.querySelectorAll('input[name="modelo"]')) r.disabled = ocupado;
+  $('#idioma').disabled = ocupado;
+  $('#vocabulario').disabled = ocupado;
+  zona.disabled = !S.wasmOk;
+}
+
+$('#items').addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-accion]');
+  if (!b) return;
+  const id = Number(b.closest('.item').dataset.id);
+  const it = S.items.find((x) => x.id === id);
+  if (!it) return;
+  const accion = b.dataset.accion;
+  if (accion === 'copiar') copiar(it, b);
+  else if (accion === 'descargar') guardar(nombreTxt(it.nombre), `${cabeceraDe(it)}\n\n${textoDe(it, $('#marcas').checked)}\n`);
+  else if (accion === 'detener') { detenerArchivo(it, 'detenido'); bombear(); }
+  else if (accion === 'reintentar') {
+    it.estado = 'cola'; it.error = ''; it.tramos = []; it.idioma = null; it.duracion = 0; it.ajustes = leerAjustes();
+    S.errorMotor = null;
+    pintarItem(it);
+    bombear();
+  } else if (accion === 'quitar') {
+    S.items.splice(S.items.indexOf(it), 1);
+    pintar();
+  }
+});
+
+$('#descargar-todo').addEventListener('click', () => {
+  const lista = terminados();
+  if (!lista.length) return;
+  const conMarcas = $('#marcas').checked;
+  if (lista.length === 1) guardar(nombreTxt(lista[0].nombre), `${cabeceraDe(lista[0])}\n\n${textoDe(lista[0], conMarcas)}\n`);
+  else guardar(`transcripciones-${new Date().toISOString().slice(0, 10)}.txt`, textoCombinado(lista, conMarcas));
+});
+
+$('#detener').addEventListener('click', () => {
+  for (const it of S.items) if (['cola', 'leyendo', 'trabajando'].includes(it.estado)) detenerArchivo(it, 'detenido');
+  bombear();
+});
+
+// ---------- arranque ----------
+(async () => {
+  try {
+    await WebAssembly.compile(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0]));
+  } catch {
+    S.wasmOk = false;
+    estado('error', 'Este visor no permite ejecutar WebAssembly, que el transcriptor necesita. Abre la página en Chrome, Edge o Firefox de escritorio.');
+  }
+  pintar();
+})();
+pintar();
+</script>

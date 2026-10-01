@@ -3,3 +3,5 @@ __pycache__/
 *.pyc
 video3d/prueba/
 video3d/datos/
+transcriptor/modelos/
+transcriptor/ort/
