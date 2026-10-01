@@ -158,6 +158,32 @@ input[type="text"]::placeholder { color: var(--tenue); opacity: .8; }
 .zona strong { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.01em; }
 .zona .formatos { font: 400 12px/1.5 var(--f-dato); color: var(--tenue); }
 
+/* ayuda para cuando el visor no abre el selector (app de Claude en el móvil) */
+.ayuda {
+  display: none;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  background: var(--superficie);
+  font-size: 14px;
+  color: var(--tenue);
+}
+.ayuda p { margin: 0; }
+.ayuda strong { color: var(--tinta); }
+.ayuda .fila { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.ayuda code {
+  font: 400 12px/1.4 var(--f-dato);
+  color: var(--tinta);
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+.ayuda a.boton { display: inline-flex; align-items: center; text-decoration: none; }
+@media (pointer: coarse) { .ayuda { display: grid; } }
+.ayuda.alerta { display: grid; border-color: var(--aviso); }
+.ayuda.alerta strong { color: var(--aviso); }
+
 /* estado del motor */
 .estado {
   display: grid;
@@ -345,6 +371,14 @@ h2 small { font: 400 13px var(--f-dato); color: var(--tenue); margin-left: 6px; 
       <span>o toca aquí para elegirlos (puedes elegir varios)</span>
       <span class="formatos">MP3 · M4A · WAV · OGG · OPUS · FLAC · WEBM — hasta 50 MB cada uno</span>
       <input type="file" id="archivos" multiple aria-label="Elegir audios para transcribir">
+    </div>
+    <div class="ayuda" id="ayuda">
+      <p><strong id="ayuda-titulo">¿En el móvil no se abre la lista de archivos?</strong> La app de Claude no siempre deja que una página elija archivos del teléfono. Abre esta misma página en el navegador (Chrome o Safari), con tu cuenta de Claude, y ahí sí podrás elegir los audios de cualquier carpeta.</p>
+      <div class="fila">
+        <a class="boton primario" id="abrir-navegador" href="https://claude.ai/artifact/MyKY7rnRwEX1iPRRywNvxm" target="_blank" rel="noopener">Abrir en el navegador</a>
+        <button type="button" class="boton" id="copiar-enlace">Copiar enlace</button>
+      </div>
+      <code>https://claude.ai/artifact/MyKY7rnRwEX1iPRRywNvxm</code>
     </div>
   </section>
 
@@ -853,7 +887,46 @@ function agregar(lista) {
 }
 
 const zona = $('#zona');
-$('#archivos').addEventListener('change', (e) => { agregar(e.target.files); e.target.value = ''; });
+$('#archivos').addEventListener('change', (e) => {
+  eligio = true;
+  $('#ayuda').classList.remove('alerta');
+  agregar(e.target.files);
+  e.target.value = '';
+});
+
+// Si al tocar no se abre el selector, la página no pierde el foco ni se oculta.
+// En ese caso se destaca la ayuda para abrirla en el navegador.
+let eligio = false;
+$('#archivos').addEventListener('click', () => {
+  eligio = false;
+  let salio = false;
+  const marcar = () => { salio = true; };
+  window.addEventListener('blur', marcar, { once: true });
+  document.addEventListener('visibilitychange', marcar, { once: true });
+  setTimeout(() => {
+    window.removeEventListener('blur', marcar);
+    document.removeEventListener('visibilitychange', marcar);
+    if (salio || eligio) return;
+    const ayuda = $('#ayuda');
+    ayuda.classList.add('alerta');
+    $('#ayuda-titulo').textContent = '¿No se abrió la lista de archivos?';
+    ayuda.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 1500);
+});
+
+$('#copiar-enlace').addEventListener('click', async () => {
+  const enlace = $('#abrir-navegador').href;
+  try {
+    await navigator.clipboard.writeText(enlace);
+    avisar('Enlace copiado. Pégalo en Chrome o Safari.');
+  } catch {
+    const r = document.createRange();
+    r.selectNodeContents(document.querySelector('#ayuda code'));
+    getSelection().removeAllRanges();
+    getSelection().addRange(r);
+    avisar('Enlace seleccionado: cópialo y pégalo en Chrome o Safari.');
+  }
+});
 for (const ev of ['dragenter', 'dragover']) {
   document.addEventListener(ev, (e) => {
     if (!e.dataTransfer?.types?.includes('Files')) return;
