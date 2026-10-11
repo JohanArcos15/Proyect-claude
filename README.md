@@ -1,3 +1,12 @@
+# Farmacología animada
+
+| Proyecto | Dónde |
+|---|---|
+| **NeuroFarma 3D**: app interactiva de fármacos del SNC (analgesia, anestesia, sedación, hipnosis, ansiolíticos, barbitúricos, antiepilépticos y antipsicóticos) con cerebro 3D, sinapsis, potencial de acción, EEG, simulador de dosis, comparador, casos y quiz | [`neurofarmacologia/`](neurofarmacologia/README.md) — abrir `neurofarmacologia/index.html` |
+| Opioides · clase animada y vídeo para YouTube | esta página (abajo) |
+
+---
+
 # Opioides · clase animada
 
 Animación rigurosa e interactiva construida a partir de un audio de 64 segundos

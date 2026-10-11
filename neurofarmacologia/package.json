@@ -1,0 +1,16 @@
+{
+  "name": "neurofarmacologia-3d",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Neurofarmacología 3D: cómo actúan los fármacos del SNC sobre los neurotransmisores",
+  "scripts": {
+    "build": "node herramientas/construir.mjs",
+    "dev": "node herramientas/construir.mjs --watch"
+  },
+  "devDependencies": {
+    "esbuild": "0.24.2",
+    "fflate": "0.8.2",
+    "three": "0.170.0"
+  },
+  "type": "module"
+}
