@@ -5,6 +5,7 @@ App personal para aprender vocabulario en inglés (nivel A2) con un ciclo diario
 | Momento | Qué haces | Dónde |
 |---|---|---|
 | Mañana | Escribes hasta 5 palabras que escuchaste en videos. Claude genera la ficha: significado, matices y usos, formas, ejemplos en 7 tiempos verbales, collocations y un consejo para hispanohablantes. | **Hoy** |
+| Cuando quieras | Pegas un *chunk* (fragmento de oración). Claude lo descompone en piezas con su función gramatical, da el patrón reutilizable, la gramática, ejemplos, transformaciones y chunks parecidos. | **Chunks** |
 | Cuando puedas | Repaso espaciado (1, 3, 7, 14 y 30 días) con tres tipos de tarjeta: español → inglés, inglés → español y completar la frase. | **Repaso** |
 | Tarde | Writing con un tema del día y tus palabras. Claude corrige solo los 3 errores más importantes. | **Writing** |
 | Fin de semana | Copias un "paquete" con tus palabras, lo pegas en un chat nuevo de Claude y practicas en el modo de voz. Al decir "finish", Claude da un resumen que pegas de vuelta para registrarlo. | **Speaking** |
@@ -13,6 +14,14 @@ App personal para aprender vocabulario en inglés (nivel A2) con un ciclo diario
 Cada día es un *periodo* (fila) de la tabla y cada palabra es un *elemento*:
 el color indica el tipo (verbo, sustantivo, adjetivo/adverbio, expresión) y
 las cuatro barras de abajo, cuánto la dominas.
+
+**Sir Lex**, un caballero en pixel art (dibujado en un canvas desde una
+cuadrícula de 24×32 en `KNIGHT`), aparece al abrir la app y dice frases en
+inglés con su traducción: saludos según la hora, frases motivadoras,
+recordatorios de repaso y ejemplos de tus propias palabras y chunks.
+
+**Audio:** voces del navegador (`speechSynthesis`) con acento de EE. UU. o
+Reino Unido, elegibles en el botón *Voz*.
 
 ## Dónde vive
 
@@ -43,6 +52,24 @@ Colección `words` (id = palabra en minúsculas con guiones, p. ej. `give-up`):
 - `forms` según el tipo: verbos `{base, past, participle, ing, third}`; sustantivos `{plural, countable}`; adjetivos `{comparative, superlative, adverb}`.
 - Estado (calculado): Nueva (sin repasos) → Aprendiendo → La reconozco (caja ≥ 3) → La uso (caja ≥ 3 y usada en writing o speaking) → Dominada (caja ≥ 4 y usada en ambos).
 - `example: true` marca fichas de muestra que no cuentan en el progreso.
+
+Colección `chunks` (id = chunk en minúsculas con guiones):
+
+```json
+{
+  "chunk": "it's up to you", "es": "depende de ti", "literal": "...", "meaning": "...",
+  "type": "expresión fija", "register": "neutral", "level": "A2", "pattern": "it's up to + persona",
+  "parts": [{"text": "it's", "cat": "subject", "role": "sujeto + verbo", "es": "es", "note": "it's = it is"}],
+  "grammar": [{"point": "...", "explain": "..."}],
+  "examples": [{"en": "...", "es": "..."}],
+  "variations": [{"label": "Pregunta", "en": "...", "es": "..."}],
+  "similar": [], "tip": "",
+  "addedOn": "2026-10-30", "createdAt": 0, "box": 0, "due": "2026-10-31", "reviews": 0, "right": 0
+}
+```
+
+- `cat`: `subject`, `verb`, `auxiliary`, `object`, `preposition`, `connector`, `modifier` u `other`.
+- Los chunks entran al mismo repaso espaciado que las palabras y al paquete de speaking.
 
 Otras colecciones:
 
