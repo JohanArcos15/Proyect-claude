@@ -13,7 +13,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 SRC = ROOT / "src"
 
-DATA = ["vocab", "sounds", "listening", "grammar", "reading", "speaking", "science", "placement"]
+DATA = ["vocab", "sounds", "listening", "grammar", "reading", "speaking", "science", "placement", "contexts"]
 
 
 def read(p: Path) -> str:

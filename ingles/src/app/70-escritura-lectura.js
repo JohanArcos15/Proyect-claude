@@ -17,10 +17,9 @@ function saveDraft(id, v) { try { localStorage.setItem(draftKey(id), v); } catch
 VIEWS.escritura = () => {
   const st = UI.escritura || (UI.escritura = {});
   if (st.id) return writeView(st);
-  const lv = l => WRITING_PROMPTS.filter(w => w.level === l);
   return `<section class="head" style="margin-bottom:18px"><p class="mono eyebrow">Expresión escrita</p><h1>Escritura</h1>
     <p class="lede">Escribir despacio te deja notar errores que al hablar se escapan. Luego esos patrones corregidos pasan a tu habla.</p></section>
-    ${['A2', 'B1'].map(l => `<h3 style="margin:18px 0 10px">${l}</h3><div class="list">${lv(l).map(w => { const n = S.writing.filter(x => x.id === w.id).length; return `<button class="list-btn" data-act="wOpen" data-id="${w.id}"><span class="grow"><b>${esc(w.title)}</b><span class="small muted" style="display:block">${esc(w.words)} palabras</span></span>${n ? `<span class="chip good">${plural(n, 'vez', 'veces')}</span>` : ''}</button>`; }).join('')}</div>`).join('')}
+    ${groupByCtx(WRITING_PROMPTS, (k, items) => `<h3 style="margin:18px 0 10px">${esc(CTX[k])}</h3><div class="list">${items.map(w => { const n = S.writing.filter(x => x.id === w.id).length; return `<button class="list-btn" data-act="wOpen" data-id="${w.id}"><span class="grow"><b>${esc(w.title)}</b><span class="small muted" style="display:block">${esc(w.level)} · ${esc(w.words)} palabras</span></span>${n ? `<span class="chip good">${plural(n, 'vez', 'veces')}</span>` : ''}</button>`; }).join('')}</div>`)}
     ${S.writing.length ? `<h3 style="margin:22px 0 10px">Tus textos recientes</h3><div class="list">${S.writing.slice().reverse().slice(0, 6).map(w => `<details><summary style="cursor:pointer"><b>${esc((WRITING_PROMPTS.find(p => p.id === w.id) || {}).title || 'Texto')}</b> <span class="small muted">· ${esc(w.d)}${w.level ? ' · nivel estimado ' + esc(w.level) : ''}</span></summary><p class="small" style="white-space:pre-wrap;margin-top:8px" lang="en">${esc(w.text)}</p></details>`).join('')}</div>` : ''}`;
 };
 ACT.wOpen = el => { UI.escritura = { id: el.dataset.id }; render(); };
@@ -82,8 +81,8 @@ VIEWS.lectura = () => {
   const st = UI.lectura || (UI.lectura = {});
   if (st.id) return readView(st);
   return `<section class="head" style="margin-bottom:18px"><p class="mono eyebrow">Comprensión lectora</p><h1>Lectura</h1>
-    <p class="lede">Textos graduados sobre tu carrera. Toca las palabras subrayadas para ver su traducción; las preguntas siguen el formato True / False / Not given de los exámenes.</p></section>
-    <div class="list">${READINGS.map(r => { const rec = S.reading[r.id]; return `<button class="list-btn" data-act="rOpen" data-id="${r.id}"><span class="grow"><b lang="en">${esc(r.title)}</b><span class="small muted" style="display:block">${r.minutes} min</span></span><span class="row" style="flex-wrap:nowrap"><span class="chip">${esc(r.level)}</span>${rec ? `<span class="chip good">${rec.score}%</span>` : ''}</span></button>`; }).join('')}</div>`;
+    <p class="lede">Textos graduados sobre trabajo, vida diaria y tu carrera. Toca las palabras subrayadas para ver su traducción; las preguntas siguen el formato True / False / Not given de los exámenes.</p></section>
+    ${groupByCtx(READINGS, (k, items) => `<h3 style="margin:18px 0 10px">${esc(CTX[k])}</h3><div class="list">${items.map(r => { const rec = S.reading[r.id]; return `<button class="list-btn" data-act="rOpen" data-id="${r.id}"><span class="grow"><b lang="en">${esc(r.title)}</b><span class="small muted" style="display:block">${r.minutes} min</span></span><span class="row" style="flex-wrap:nowrap"><span class="chip">${esc(r.level)}</span>${rec ? `<span class="chip good">${rec.score}%</span>` : ''}</span></button>`; }).join('')}</div>`)}`;
 };
 ACT.rOpen = el => { UI.lectura = { id: el.dataset.id, open: {}, qa: {} }; render(); window.scrollTo(0, 0); };
 ACT.rBack = () => { TTS.stop(); UI.lectura = {}; render(); };

@@ -22,7 +22,7 @@ function monthBlister() {
   return `<div class="month">${cells}</div>`;
 }
 function skillRows() {
-  const max = LVL_MAX[S.level] || 2, all = allItems().filter(i => i.lvl <= max);
+  const max = LVL_MAX[S.level] || 2, all = allItems().filter(i => i.lvl <= max && (i.tag === 'propia' || ctxOn().includes(i.ctx)));
   const vocab = pct(all.filter(i => { const c = S.srs[i.id + ':r']; return c && c.s === 'review' && c.ivl >= 7; }).length, all.length);
   const accs = HVPT_SETS.map(s => hvptAcc(s.id)).filter(a => a !== null);
   const ear = accs.length ? Math.round(accs.reduce((a, b) => a + b, 0) / accs.length) : 0;
@@ -77,6 +77,7 @@ VIEWS.progreso = () => {
       <p class="small muted">Orientativa, no oficial. Repítela cada 4–6 semanas para ver tu avance.</p>
       <div class="row"><button class="btn" data-act="goPlacement">${S.placement ? 'Repetir la prueba' : 'Hacer la prueba'}</button><span class="small muted">Nivel actual del plan: <b>${esc(S.level)}</b></span>${seg('level', [['A1', 'A1'], ['A2', 'A2'], ['B1', 'B1']], S.level)}</div></div>
     <div class="card stack-lg" style="margin-bottom:16px"><h3>Ajustes</h3>
+      <div class="stack"><span class="small" style="font-weight:700">Contextos de práctica</span>${ctxToggles()}<span class="small faint">El plan alterna los contextos activos; el día a día y el trabajo aparecen el doble que ciencia y farmacia.</span></div>
       <div class="stack"><span class="small" style="font-weight:700">Acento de las voces</span>${seg('accent', [['us', 'EE. UU.'], ['uk', 'Reino Unido'], ['any', 'Cualquiera']], S.settings.accent)}</div>
       <div class="stack"><span class="small" style="font-weight:700">Velocidad de la voz</span>${seg('rate', [[0.7, 'Lenta'], [0.85, 'Media'], [0.9, 'Media+'], [1, 'Normal']], S.settings.rate)}</div>
       <div class="stack"><span class="small" style="font-weight:700">Tarjetas nuevas por día</span>${seg('newPerDay', [[10, '10'], [15, '15'], [20, '20'], [25, '25']], S.settings.newPerDay)}<span class="small faint">Cada tarjeta nueva genera repasos durante semanas: 15 al día son unos 10–12 minutos diarios de repaso a medio plazo.</span></div>
@@ -169,6 +170,7 @@ VIEWS.ciencia = () => {
       <p><b>Series con subtítulos en inglés, no en español.</b> Los subtítulos en el mismo idioma del audio ayudan a la comprensión y al vocabulario (metaanálisis de Montero Perez et al., 2013). Empieza por algo que ya viste en español.</p>
       <p><b>Audio para aprendices, a diario:</b> <a href="https://www.bbc.co.uk/learningenglish/english/features/6-minute-english" target="_blank" rel="noopener">BBC Learning English · 6 Minute English</a> y <a href="https://learningenglish.voanews.com/" target="_blank" rel="noopener">VOA Learning English</a>, que habla más lento.</p>
       <p><b>Tu carrera en inglés:</b> repasa un tema de farmacología que ya entiendes en un video o libro en inglés. Como ya conoces el contenido, el inglés se vuelve comprensible.</p>
+      <p><b>Ofertas de trabajo reales:</b> lee dos o tres ofertas en inglés por semana en portales de empleo y anota los requisitos y verbos que se repiten (manage, handle, support, report). Es exactamente el vocabulario que te pedirán.</p>
       <p><b>Habla con personas:</b> la IA reduce la ansiedad, pero el objetivo final son conversaciones reales (grupos de intercambio, tutorías, compañeros).</p>
     </div>
     <h2 style="margin:26px 0 12px">Comprueba que lo entendiste</h2>

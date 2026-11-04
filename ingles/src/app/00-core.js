@@ -79,7 +79,7 @@ const LVL_MAX = { A1: 1, A2: 2, B1: 3, B2: 3 };
 function freshState() {
   return {
     v: 1, updated: 0, created: dkey(), level: 'A2', onboarded: false,
-    settings: { accent: 'us', rate: 0.9, newPerDay: 15, autoplay: true, roundMode: 'a2' },
+    settings: { accent: 'us', rate: 0.9, newPerDay: 15, autoplay: true, roundMode: 'a2', contexts: ['diario', 'trabajo', 'farma'] },
     srs: {}, custom: [], days: {}, hvpt: {},
     drills: { stress: { n: 0, ok: 0 }, ed: { n: 0, ok: 0 }, s: { n: 0, ok: 0 }, dose: { n: 0, ok: 0 } },
     grammar: {}, listening: {}, reading: {}, speaking: { n: 0, log: [] }, writing: [],
@@ -263,7 +263,7 @@ function aiMsg(code) {
   })[code] || 'No se pudo completar la consulta. Intenta de nuevo.';
 }
 const IN_CLAUDE = !!(window.claude && typeof window.claude.use === 'function');
-const learner = () => `Learner: a Spanish-speaking (Latin America) university student of pharmaceutical chemistry. Current English level: about ${S.level} (CEFR). Goals: an English certificate, speaking fluently, reading scientific papers and working in pharmacy or the pharmaceutical industry.`;
+const learner = () => `Learner: a Spanish-speaking (Latin America) university student of pharmaceutical chemistry. Current English level: about ${S.level} (CEFR). Main goals: communicating in everyday situations and at work, and getting a job (interviews, emails, customer service, meetings). Also: an English certificate, reading scientific papers and working in pharmacy.`;
 const AI_OFF_NOTE = () => IN_CLAUDE
   ? `<p class="note small">Las funciones con IA usan tu cuenta de Claude. ${AI.off ? 'En esta visita no hay permiso; recarga la página para volver a preguntar.' : 'Se activan al abrir la app dentro de Claude.'}</p>`
   : `<p class="note small">El tutor con IA solo funciona cuando abres la app desde Claude (claude.ai). Aquí puedes usar la lista de autorrevisión.</p>`;
@@ -315,11 +315,11 @@ const NAV = [
 ];
 const PRACTICE = [
   ['sonidos', 'Sonidos', 'Pares mínimos con muchas voces, acento de palabra y terminaciones.'],
-  ['escucha', 'Escucha', 'Diálogos de farmacia y laboratorio, dictado, shadowing y dosis.'],
+  ['escucha', 'Escucha', 'Cafetería, entrevista, atención al cliente, reuniones y farmacia, con dictado y shadowing.'],
   ['gramatica', 'Gramática', 'Unidades cortas con el error típico del hispanohablante.'],
-  ['habla', 'Habla', 'Preguntas rápidas, técnica 4/3/2, conversación con IA y lectura en voz alta.'],
-  ['escritura', 'Escritura', 'Correos, instrucciones a pacientes, resúmenes y opinión, con corrección.'],
-  ['lectura', 'Lectura', 'Textos graduados: paracetamol, antibióticos, ADME, abstracts.']
+  ['habla', 'Habla', 'Preguntas de entrevista, técnica 4/3/2, conversación con IA y lectura en voz alta.'],
+  ['escritura', 'Escritura', 'Hoja de vida, carta de presentación, correos profesionales y mensajes, con corrección.'],
+  ['lectura', 'Lectura', 'Ofertas de trabajo, correos, vivir en otra ciudad, trabajo remoto y temas de farmacia.']
 ];
 const ROUTES = ['hoy', 'repaso', 'mazo', 'practicar', 'sonidos', 'escucha', 'gramatica', 'habla', 'escritura', 'lectura', 'progreso', 'ciencia', 'nivel'];
 const PARENT = { mazo: 'repaso', sonidos: 'practicar', escucha: 'practicar', gramatica: 'practicar', habla: 'practicar', escritura: 'practicar', lectura: 'practicar', nivel: 'progreso' };
@@ -384,3 +384,26 @@ ACT.say = el => { TTS.speak(el.dataset.text, el.dataset.voice === 'random' ? { v
 ACT.goHome = () => go('hoy', null);
 ACT.nav = (el, ev) => { const to = el.dataset.navlink; UI[to] = null; if (el.tagName !== 'A' || route() === to) { ev.preventDefault(); go(to); } };
 ACT.goto = el => go(el.dataset.to);
+
+/* ================= Contextos ================= */
+/* Rotación: día a día y trabajo aparecen el doble que ciencia y farmacia. */
+function ctxOn() { const c = (S.settings.contexts || []).filter(k => CTX[k]); return c.length ? c : CTX_ORDER.slice(); }
+function ctxRotation() { const on = ctxOn(), r = ['diario', 'trabajo', 'diario', 'trabajo', 'farma'].filter(k => on.includes(k)); return r.length ? r : on; }
+const LEVEL_RANK = l => /^A1/.test(l) ? 0 : l === 'A2' ? 1 : /^A2/.test(l) ? 2 : 3;
+function pickItem(list, ctx, rec) {
+  const on = ctxOn();
+  let pool = list.filter(x => x.ctx === ctx);
+  if (!pool.length) pool = list.filter(x => on.includes(x.ctx));
+  if (!pool.length) pool = list.slice();
+  if (S.level === 'A1' || S.level === 'A2') pool = pool.slice().sort((a, b) => LEVEL_RANK(a.level || 'A2') - LEVEL_RANK(b.level || 'A2'));
+  const fresh = pool.find(x => !rec(x));
+  if (fresh) return fresh;
+  return pool.slice().sort((a, b) => ((rec(a) || {}).done || 0) - ((rec(b) || {}).done || 0))[0];
+}
+function groupByCtx(list, fn) { return CTX_ORDER.map(k => { const items = list.filter(x => (x.ctx || 'diario') === k); return items.length ? fn(k, items) : ''; }).join(''); }
+const ctxToggles = () => `<div class="row">${CTX_ORDER.map(k => `<button class="chip" aria-pressed="${ctxOn().includes(k)}" data-act="toggleCtx" data-k="${k}">${esc(CTX[k])}</button>`).join('')}</div>`;
+ACT.toggleCtx = el => {
+  const k = el.dataset.k, on = ctxOn(), next = on.includes(k) ? on.filter(x => x !== k) : on.concat(k);
+  if (!next.length) { toast('Deja al menos un contexto activo.'); return; }
+  S.settings.contexts = CTX_ORDER.filter(x => next.includes(x)); delete today().plan; commit(); render();
+};

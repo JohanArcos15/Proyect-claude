@@ -5,7 +5,7 @@ const STEP_DEFS = {
   escucha: { title: 'Escucha activa y shadowing', min: 12, view: 'escucha', why: 'Primero el significado, luego el detalle: dictado y repetir en voz alta.' },
   gramatica: { title: 'Gramática en dosis', min: 8, view: 'gramatica', why: 'Intentas antes de la explicación, ves el error típico y practicas recordando.' },
   habla: { title: 'Habla', min: 12, view: 'habla', why: 'Producir te hace notar lo que te falta; repetir con menos tiempo construye fluidez.' },
-  lectura: { title: 'Lectura graduada', min: 8, view: 'lectura', why: 'Input comprensible de tu carrera: vocabulario en contexto.' },
+  lectura: { title: 'Lectura graduada', min: 8, view: 'lectura', why: 'Input comprensible: ofertas de trabajo, vida diaria y tu carrera, con vocabulario en contexto.' },
   escritura: { title: 'Escritura con corrección', min: 8, view: 'escritura', why: 'Escribir despacio te deja notar y corregir patrones que al hablar se escapan.' },
   cierre: { title: 'Cierre y plan de mañana', min: 2, view: 'hoy', why: 'Decidir cuándo y dónde estudiarás mañana aumenta mucho la probabilidad de hacerlo.' }
 };
@@ -25,13 +25,8 @@ function pickHvptSet() {
   const acc = s => { const r = S.hvpt[s.id].last || []; return r.length ? r.reduce((x, y) => x + y, 0) / r.length : 0; };
   return sets.slice().sort((a, b) => (acc(a) - acc(b)) || (rank[a.prio] - rank[b.prio]))[0];
 }
-function pickDialogue() {
-  const order = S.level === 'B1' || S.level === 'B2' ? DIALOGUES.slice().sort((a, b) => (a.level.includes('B1') ? 0 : 1) - (b.level.includes('B1') ? 0 : 1)) : DIALOGUES;
-  const fresh = order.find(d => !S.listening[d.id]);
-  if (fresh) return fresh.id;
-  return order.slice().sort((a, b) => (S.listening[a.id].done || 0) - (S.listening[b.id].done || 0))[0].id;
-}
-function grammarStart() { return S.level === 'B2' ? 11 : S.level === 'B1' ? 10 : 0; }
+function pickDialogue(ctx) { return pickItem(DIALOGUES, ctx, d => S.listening[d.id]).id; }
+function grammarStart() { const id = S.level === 'B2' ? 'g-passive' : S.level === 'B1' ? 'g-perfect' : null; return id ? Math.max(0, GRAMMAR.findIndex(u => u.id === id)) : 0; }
 function pickGrammar() {
   const now = Date.now();
   const due = GRAMMAR.filter(u => S.grammar[u.id] && S.grammar[u.id].next && S.grammar[u.id].next <= now).sort((a, b) => S.grammar[a.id].next - S.grammar[b.id].next);
@@ -41,23 +36,20 @@ function pickGrammar() {
   const oldest = GRAMMAR.slice().sort((a, b) => (S.grammar[a.id].next || 0) - (S.grammar[b.id].next || 0))[0];
   return { id: oldest.id, mode: 'review' };
 }
-function pickSpeaking(di) {
-  if (IN_CLAUDE && di % 2 === 1) return { type: 'ia', id: ROLEPLAYS[Math.floor(di / 2) % ROLEPLAYS.length].id };
-  return { type: '432', id: CUE_CARDS[Math.floor(di / 2) % CUE_CARDS.length].id };
+function pickSpeaking(di, ctx) {
+  const on = ctxOn(), inCtx = list => { const p = list.filter(x => x.ctx === ctx); return p.length ? p : (list.filter(x => on.includes(x.ctx)).length ? list.filter(x => on.includes(x.ctx)) : list); };
+  if (IN_CLAUDE && di % 2 === 1) { const p = inCtx(ROLEPLAYS); return { type: 'ia', id: p[Math.floor(di / 2) % p.length].id }; }
+  const p = inCtx(CUE_CARDS); return { type: '432', id: p[Math.floor(di / 2) % p.length].id };
 }
-function pickReading() {
-  const fresh = READINGS.find(r => !S.reading[r.id]);
-  if (fresh) return fresh.id;
-  return READINGS.slice().sort((a, b) => (S.reading[a.id].done || 0) - (S.reading[b.id].done || 0))[0].id;
-}
+function pickReading(ctx) { return pickItem(READINGS, ctx, r => S.reading[r.id]).id; }
 function writingPool() { return WRITING_PROMPTS.filter(w => (S.level === 'A1' || S.level === 'A2') ? w.level === 'A2' : true); }
-function pickWriting() { const pool = writingPool(); return pool[S.writing.length % pool.length].id; }
+function pickWriting(ctx) { const pool = writingPool(), p = pool.filter(w => w.ctx === ctx), l = p.length ? p : pool; return l[S.writing.length % l.length].id; }
 
 function ensurePlan() {
   const t = today();
-  if (t.plan && t.plan.ids) return t.plan;
-  const di = dayIndex();
-  t.plan = { ids: planIds(), sonidos: pickHvptSet().id, escucha: pickDialogue(), gramatica: pickGrammar(), habla: pickSpeaking(di), lectura: pickReading(), escritura: pickWriting() };
+  if (t.plan && t.plan.ids && t.plan.v === 2) return t.plan;
+  const di = dayIndex(), rot = ctxRotation(), c = off => rot[(di + off) % rot.length];
+  t.plan = { v: 2, ids: planIds(), sonidos: pickHvptSet().id, escucha: pickDialogue(c(0)), gramatica: pickGrammar(), habla: pickSpeaking(di, c(2)), lectura: pickReading(c(1)), escritura: pickWriting(c(3)) };
   commit();
   return t.plan;
 }
@@ -154,10 +146,11 @@ VIEWS.hoy = () => {
     <p class="mono eyebrow">Antes de empezar</p>
     <h2>Te doy la bienvenida</h2>
     <p class="prose">Me dijiste que estás entre A1 y A2. Empezaré en A2 y repasaré lo básico rápido. Si prefieres confirmarlo, la prueba de nivel toma unos 6 minutos y puedes repetirla cada mes para medir tu avance.</p>
+    <div class="stack" style="gap:8px"><p class="small"><b>¿En qué contextos quieres practicar?</b> El plan mezcla los que actives; puedes cambiarlos cuando quieras en Progreso › Ajustes.</p>${ctxToggles()}</div>
     <div class="row"><button class="btn btn-primary" data-act="goPlacement">Hacer la prueba de nivel</button><button class="btn" data-act="setLevel" data-level="A2">Empezar en A2</button><button class="btn btn-ghost" data-act="setLevel" data-level="A1">Empezar en A1</button></div>
   </section>`;
   h += `<div class="today-grid"><article class="rx">
-    <header class="rx-head"><span class="rx-mark" aria-hidden="true">℞</span><div class="grow"><p class="mono faint">Prescripción diaria · inglés</p><p class="rx-sig">Sig.: ${sunday ? 'dosis ligera de domingo, ~' + total + ' min' : '1 sesión de ~' + total + ' min, 6 días por semana'}</p></div></header>
+    <header class="rx-head"><span class="rx-mark" aria-hidden="true">℞</span><div class="grow"><p class="mono faint">Prescripción diaria · inglés</p><p class="rx-sig">Sig.: ${sunday ? 'dosis ligera de domingo, ~' + total + ' min' : '1 sesión de ~' + total + ' min, 6 días por semana'}</p><p class="small faint">Contextos: ${esc(ctxOn().map(k => CTX[k]).join(' · '))}</p></div></header>
     <ol class="steps">${plan.ids.map((id, i) => {
       const def = STEP_DEFS[id], done = !!t.steps[id], isNext = id === nextId;
       return `<li class="step ${done ? 'done' : ''} ${isNext ? 'next' : ''}">

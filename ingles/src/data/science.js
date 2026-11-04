@@ -14,7 +14,7 @@ const PRINCIPLES = [
 {id:'frequency', ev:'solido', title:'Vocabulario por frecuencia (y tus cognados)',
  what:'Unas pocas miles de familias de palabras cubren la gran mayoría de lo que lees y oyes. Para leer sin ayuda hace falta conocer cerca del 95–98 % de las palabras de un texto.',
  why:'Rinde más aprender primero lo frecuente. Además, tu español te regala miles de cognados científicos de origen latino y griego (absorption, receptor, metabolism).',
- app:'El mazo empieza por palabras y frases básicas, sube a vocabulario de farmacia y luego académico. Los falsos amigos se entrenan aparte.',
+ app:'El mazo empieza por palabras y frases básicas y alterna vocabulario del día a día, del trabajo y de farmacia. Los falsos amigos se entrenan aparte.',
  refs:'Nation 2006 (Can Mod Lang Rev); Laufer & Ravenhorst-Kalovski 2010; Coxhead 2000 (Academic Word List); de Groot & Keijzer 2000 (cognados).'},
 {id:'chunks', ev:'respaldado', title:'Bloques léxicos (chunks)',
  what:'Los hablantes fluidos no arman cada frase palabra por palabra: usan bloques prefabricados («It depends on…», «Could you repeat that?»).',

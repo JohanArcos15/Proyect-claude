@@ -3,7 +3,7 @@ const ITEMS = [], ITEM = {};
 VOCAB.forEach((g, gi) => g.items.forEach((it, ii) => {
   const [lvl, en, es, ex, exEs, tip, ipa] = it;
   let id = slug(en); while (ITEM[id]) id += '-b';
-  const o = { id, lvl, en, es, ex: ex || '', exEs: exEs || '', tip: tip || '', ipa: ipa || '', tag: g.tag, tagLabel: g.label, order: lvl * 10000 + ii * 10 + gi };
+  const o = { id, lvl, en, es, ex: ex || '', exEs: exEs || '', tip: tip || '', ipa: ipa || '', tag: g.tag, tagLabel: g.label, ctx: g.ctx || 'diario', order: lvl * 10000 + ii * 10 + gi };
   ITEMS.push(o); ITEM[id] = o;
 }));
 function itemById(id) { return ITEM[id] || S.custom.find(c => c.id === id) || null; }
@@ -11,8 +11,9 @@ function allItems() { return S.custom.map(c => Object.assign({ tag: 'propia', ta
 const cardItem = cid => itemById(cid.replace(/:[rp]$/, ''));
 const isLearning = c => c.s === 'learn' || c.s === 'relearn';
 
-function newPool() { const max = LVL_MAX[S.level] || 2; return allItems().filter(it => it.lvl <= max && !S.srs[it.id + ':r']).sort((a, b) => a.order - b.order); }
-function prodPool() { return allItems().filter(it => { const r = S.srs[it.id + ':r']; return r && r.s === 'review' && r.ivl >= 3 && !S.srs[it.id + ':p']; }); }
+function newPool() { const max = LVL_MAX[S.level] || 2, on = ctxOn(); return allItems().filter(it => it.lvl <= max && !S.srs[it.id + ':r'] && (it.tag === 'propia' || on.includes(it.ctx))).sort((a, b) => a.order - b.order); }
+function nextNewItem() { const pool = newPool(); if (!pool.length) return null; const own = pool.find(i => i.tag === 'propia'); if (own) return own; const rot = ctxRotation(), want = rot[today().newc % rot.length]; return pool.find(i => i.ctx === want) || pool[0]; }
+function prodPool() { return allItems().filter(it => { const r = S.srs[it.id + ':r']; return r && r.s === 'review' && r.ivl >= 3 && dkey(new Date(r.last || 0)) !== dkey() && !S.srs[it.id + ':p']; }); }
 function srsCounts() {
   const now = Date.now(), eod = endOfToday(); let due = 0, learn = 0;
   for (const [id, c] of Object.entries(S.srs)) {
@@ -34,7 +35,7 @@ function nextCard() {
   const n = (UI.repaso && UI.repaso.count) || 0;
   if (reviews.length && !(n % 4 === 3 && (newOk || prodOk))) return reviews[0][0];
   if (prodOk && n % 2 === 0) { const p = prodPool()[0]; if (p) return p.id + ':p'; }
-  if (newOk) { const it = newPool()[0]; if (it) return it.id + ':r'; }
+  if (newOk) { const it = nextNewItem(); if (it) return it.id + ':r'; }
   if (prodOk) { const p = prodPool()[0]; if (p) return p.id + ':p'; }
   if (reviews.length) return reviews[0][0];
   for (const [id, c] of Object.entries(S.srs)) if (isLearning(c) && c.due <= now + 20 * MIN && cardItem(id) && (!best || c.due < best[1].due)) best = [id, c];
@@ -89,7 +90,7 @@ VIEWS.repaso = () => {
   const c = srsCounts();
   if (st.mode === 'study') return studyView(st);
   const max = LVL_MAX[S.level] || 2;
-  const all = allItems().filter(i => i.lvl <= max);
+  const all = allItems().filter(i => i.lvl <= max && (i.tag === 'propia' || ctxOn().includes(i.ctx)));
   const seen = all.filter(i => S.srs[i.id + ':r']).length;
   const mature = Object.values(S.srs).filter(x => x.s === 'review' && x.ivl >= 21).length;
   return `<section class="head" style="margin-bottom:18px"><p class="mono eyebrow">Memoria a largo plazo</p><h1>Repaso espaciado</h1>
@@ -184,7 +185,7 @@ VIEWS.mazo = () => {
   const list = allItems().filter(i => (st.tag === 'todas' || i.tag === st.tag) && (!q || norm(i.en + ' ' + i.es).includes(q)));
   const status = it => { const r = S.srs[it.id + ':r']; if (!r) return '<span class="chip">Nueva</span>'; if (isLearning(r)) return '<span class="chip amber">Aprendiendo</span>'; return r.ivl >= 21 ? '<span class="chip good">Madura</span>' : '<span class="chip pine">En repaso</span>'; };
   return `<button class="back" data-act="goto" data-to="repaso">${ICON.back} Repaso</button>
-    <section class="head" style="margin:10px 0 18px"><h1>Mazo de vocabulario</h1><p class="lede">${ITEMS.length} entradas seleccionadas por frecuencia y utilidad para tu carrera, más las tuyas.</p></section>
+    <section class="head" style="margin:10px 0 18px"><h1>Mazo de vocabulario</h1><p class="lede">${ITEMS.length} entradas para comunicarte en el día a día, conseguir trabajo y tu carrera, más las tuyas.</p></section>
     <details class="card stack" ${st.adding ? 'open' : ''}><summary style="cursor:pointer;font-weight:700">Añadir una palabra propia</summary>
       <div class="grid-2" style="margin-top:12px"><div class="field"><label for="add-en">Inglés</label><input id="add-en" class="input" lang="en" placeholder="Ej.: dropper"></div><div class="field"><label for="add-es">Español</label><input id="add-es" class="input" placeholder="Ej.: gotero"></div></div>
       <div class="field"><label for="add-ex">Ejemplo en inglés (opcional)</label><input id="add-ex" class="input" lang="en" placeholder="Ej.: Use the dropper to add two drops."></div>

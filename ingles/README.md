@@ -1,17 +1,29 @@
 # Dosis de Inglés
 
-App para aprender inglés (de A2 hacia B2), pensada para una estudiante o un estudiante de química farmacéutica.
-Cada día propone una «prescripción» de unos 58 minutos. Cada paso aplica un principio con evidencia
-en aprendizaje de idiomas y psicología de la memoria.
+App para aprender inglés (de A2 hacia B2) con un objetivo práctico: comunicarte en el día a día y
+conseguir trabajo (entrevistas, hoja de vida, correos, atención al cliente, reuniones). También incluye
+contenido de química farmacéutica. Cada día propone una «prescripción» de unos 58 minutos. Cada paso
+aplica un principio con evidencia en aprendizaje de idiomas y psicología de la memoria.
+
+## Contextos
+
+El contenido está etiquetado en tres contextos que se activan o desactivan en Progreso › Ajustes:
+
+- **Día a día**: cafetería, indicaciones, alquilar una habitación, conocer gente, small talk.
+- **Trabajo y empleo**: entrevistas, «Tell me about yourself», ofertas de trabajo, hoja de vida, carta de
+  presentación, correos de seguimiento, atención al cliente, videollamadas.
+- **Ciencia y farmacia**: mostrador de farmacia, laboratorio, ADME, antibióticos, abstracts.
+
+El plan alterna los contextos activos: día a día y trabajo aparecen el doble que ciencia y farmacia.
 
 | Paso | Qué haces | Principio |
 |---|---|---|
 | Repaso espaciado | Tarjetas (inglés → español y luego español → inglés) | Práctica de recuperación + espaciado |
 | Oído fino | Pares mínimos con muchas voces (ship/sheep, cap/cup…) | HVPT, inteligibilidad, carga funcional |
-| Escucha | Diálogos de farmacia y laboratorio: preguntas → dictado → transcripción → shadowing | Input comprensible, noticing |
+| Escucha | 17 diálogos (cafetería, entrevista, atención al cliente, reuniones, farmacia): preguntas → dictado → transcripción → shadowing | Input comprensible, noticing |
 | Gramática | Calentamiento → regla → error típico del hispanohablante → práctica | Pretesting, instrucción explícita |
 | Habla | Preguntas rápidas, técnica 4/3/2, conversación con IA, lectura en voz alta con dictado | Output, fluidez por repetición, feedback |
-| Lectura / escritura | Textos graduados (paracetamol, antibióticos, ADME, abstracts) y escritos con corrección | Input + output con feedback |
+| Lectura / escritura | Textos graduados (oferta de trabajo, correo profesional, trabajo remoto, paracetamol, ADME…) y escritos con corrección (hoja de vida, carta de presentación, correos) | Input + output con feedback |
 | Cierre | Resumen y cuándo y dónde estudiarás mañana | Intenciones de implementación |
 
 La sección **La ciencia** de la app explica cada principio, su nivel de evidencia (sólido, respaldado,
@@ -19,7 +31,7 @@ emergente, discutido o mito) y las referencias.
 
 ## Archivos
 
-- `src/data/*.js`: contenido (vocabulario, sonidos, diálogos, gramática, lecturas, habla, ciencia, prueba de nivel).
+- `src/data/*.js`: contenido (vocabulario, sonidos, diálogos, gramática, lecturas, habla, ciencia, prueba de nivel). `contexts.js` añade el contenido de día a día y trabajo y etiqueta todo por contexto.
 - `src/app/*.js`: lógica (estado, voz, plan, repaso espaciado y cada módulo).
 - `src/styles.css`, `src/shell.html`: diseño y estructura.
 - `build.py`: une todo en dos archivos:

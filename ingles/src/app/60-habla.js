@@ -59,7 +59,7 @@ ACT.hTab = el => { stopTimers(); TTS.stop(); const tab = el.dataset.tab; UI.habl
 
 /* Preguntas rápidas */
 function quickView(st) {
-  const r = st.r || (st.r = { qi: Math.floor(Math.random() * QUICK_QUESTIONS.length) });
+  const r = st.r || (st.r = { qi: randomQuick() });
   const [q, model, chunks] = QUICK_QUESTIONS[r.qi];
   const t = today();
   return `<div class="card lift stack-lg">
@@ -81,7 +81,8 @@ function quickDone() {
 ACT.qStart = () => { const r = UI.habla.r; r.end = Date.now() + 45000; r.counted = false; render(); countdown('#qtimer', r.end, () => { chime(); if (!r.counted) { r.counted = true; quickDone(); } r.end = 1; render(); }); };
 ACT.qStop = () => { stopTimers(); const r = UI.habla.r; if (!r.counted) { r.counted = true; quickDone(); } r.end = 1; render(); };
 ACT.qShow = () => { UI.habla.r.shown = true; render(); };
-ACT.qNext = () => { stopTimers(); const old = UI.habla.r.qi; let qi; do { qi = Math.floor(Math.random() * QUICK_QUESTIONS.length); } while (qi === old && QUICK_QUESTIONS.length > 1); UI.habla.r = { qi }; delete FB.quick; KEEP['q-trans'] = ''; render(); };
+function randomQuick(not) { const on = ctxOn(), all = QUICK_QUESTIONS.map((q, i) => i), idx = all.filter(i => on.includes(QUICK_QUESTIONS[i][3] || 'diario') && i !== not), pool = idx.length ? idx : all; return pool[Math.floor(Math.random() * pool.length)]; }
+ACT.qNext = () => { stopTimers(); UI.habla.r = { qi: randomQuick(UI.habla.r.qi) }; delete FB.quick; KEEP['q-trans'] = ''; render(); };
 ACT.qFB = () => { const r = UI.habla.r; runSpeechFB('quick', QUICK_QUESTIONS[r.qi][0], ($('#q-trans') || {}).value || ''); };
 
 /* Técnica 4/3/2 */
@@ -93,7 +94,7 @@ const ROUND_TXT = {
   r3: 'Ronda 3: última vez, más rápido aún. Reutiliza los mismos bloques de frases.'
 };
 function view432(st) {
-  const s = st.t432 || (st.t432 = { card: CUE_CARDS[dayIndex() % CUE_CARDS.length].id, phase: 'intro' });
+  const s = st.t432 || (st.t432 = { card: (() => { const p = CUE_CARDS.filter(c => ctxOn().includes(c.ctx)), l = p.length ? p : CUE_CARDS; return l[dayIndex() % l.length].id; })(), phase: 'intro' });
   const card = CUE_CARDS.find(c => c.id === s.card), dur = DUR[S.settings.roundMode] || DUR.a2;
   const cardHTML = `<div class="panel stack"><p class="mono faint">Tarjeta</p><p style="font-family:var(--font-display);font-size:1.35rem;font-weight:700" lang="en">Describe ${esc(card.title.charAt(0).toLowerCase() + card.title.slice(1))}</p><p class="small muted">You should say:</p><ul style="margin:0;padding-left:18px" lang="en">${card.points.map(p => `<li>${esc(p)}</li>`).join('')}</ul></div>`;
   if (s.phase === 'intro') {
@@ -155,7 +156,7 @@ function chatView(st) {
   if (!AI.ok()) return `<div class="card stack"><h3>Conversación con IA</h3><p class="prose">Practica situaciones reales (farmacia, entrevista, examen oral) con un compañero que corrige un error importante por turno.</p>${AI_OFF_NOTE()}<p class="small muted">Mientras tanto, usa Preguntas rápidas o la técnica 4/3/2.</p></div>`;
   const c = st.chat;
   if (!c) return `<p class="small muted" style="margin-bottom:10px">Elige una situación. Escribe o dicta tus respuestas en inglés; el tutor corrige un error importante por turno.</p>
-    <div class="list">${ROLEPLAYS.map(r => `<button class="list-btn" data-act="chatOpen" data-id="${r.id}"><span class="grow"><b>${esc(r.title)}</b><span class="small muted" style="display:block">${esc(r.goal)}</span></span>${ICON.next}</button>`).join('')}</div>`;
+    ${groupByCtx(ROLEPLAYS, (k, items) => `<h3 style="margin:16px 0 8px">${esc(CTX[k])}</h3><div class="list">${items.map(r => `<button class="list-btn" data-act="chatOpen" data-id="${r.id}"><span class="grow"><b>${esc(r.title)}</b><span class="small muted" style="display:block">${esc(r.goal)}</span></span>${ICON.next}</button>`).join('')}</div>`)}`;
   const sc = ROLEPLAYS.find(r => r.id === c.sc);
   return `<button class="back" data-act="chatClose">${ICON.back} Otras situaciones</button>
     <div class="card lift stack" style="margin-top:10px"><div class="row-between"><h3>${esc(sc.title)}</h3><span class="chip pine">${ICON.spark} IA</span></div><p class="small muted">${esc(sc.goal)}</p></div>

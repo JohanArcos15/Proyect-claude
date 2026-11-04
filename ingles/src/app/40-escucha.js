@@ -35,11 +35,11 @@ VIEWS.escucha = () => {
   return `<section class="head" style="margin-bottom:18px"><p class="mono eyebrow">Comprensión auditiva</p><h1>Escucha</h1>
     <p class="lede">Cada diálogo sigue cinco pasos: del significado general al detalle del sonido.</p></section>
     <div class="card lift row" style="flex-wrap:nowrap;align-items:flex-start;margin-bottom:16px"><span class="icon-btn" aria-hidden="true">${ICON.escucha}</span>
-      <div class="grow stack" style="gap:6px"><b style="font-family:var(--font-display);font-size:1.15rem">Entrenador de dosis</b><p class="small muted">Escucha una indicación («Take fifteen milligrams every eight hours») y anota dosis, unidad y frecuencia. Entrena fifteen/fifty, decimales y unidades.</p>
+      <div class="grow stack" style="gap:6px"><b style="font-family:var(--font-display);font-size:1.15rem">Entrenador de dosis</b><p class="small muted">Escucha una indicación («Take fifteen milligrams every eight hours») y anota dosis, unidad y frecuencia. Entrena números (fifteen/fifty), decimales y unidades, útiles en cualquier trabajo.</p>
       <div><button class="btn btn-sm btn-primary" data-act="doseStart">Empezar 10 indicaciones</button></div></div></div>
-    <div class="list">${DIALOGUES.map(d => { const r = S.listening[d.id]; return `<button class="list-btn" data-act="openDialogue" data-id="${d.id}">
+    ${groupByCtx(DIALOGUES, (k, items) => `<h3 style="margin:18px 0 10px">${esc(CTX[k])}</h3><div class="list">${items.map(d => { const r = S.listening[d.id]; return `<button class="list-btn" data-act="openDialogue" data-id="${d.id}">
       <span class="grow"><b lang="en">${esc(d.title)}</b><span class="small muted" style="display:block">${esc(d.topic)} · ${d.lines.length} líneas</span></span>
-      <span class="row" style="flex-wrap:nowrap"><span class="chip">${esc(d.level)}</span>${r ? `<span class="chip good">${r.score != null ? r.score + '%' : 'Hecho'}</span>` : ''}</span></button>`; }).join('')}</div>`;
+      <span class="row" style="flex-wrap:nowrap"><span class="chip">${esc(d.level)}</span>${r ? `<span class="chip good">${r.score != null ? r.score + '%' : 'Hecho'}</span>` : ''}</span></button>`; }).join('')}</div>`)}`;
 };
 ACT.openDialogue = el => { UI.escucha = { id: el.dataset.id, step: 0 }; render(); };
 ACT.lBack = () => { TTS.stop(); UI.escucha = {}; render(); };
