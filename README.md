@@ -12,6 +12,10 @@ sobre opioides, más un vídeo listo para YouTube.
 | Subtítulos en español (válidos para ambas versiones) | `salida/subtitulos-es.srt` (también `data/subtitulos.vtt`) |
 | Página interactiva (reproductor 3D, cerebro y moléculas girables) | `index.html` |
 
+> **También en este repositorio:** [`vocablo/`](vocablo/README.md), una app de
+> fichas de vocabulario en inglés con la repetición espaciada de Anki (SM-2) y
+> FSRS.
+
 ## Qué dice el audio
 
 > Hoy hablaremos de medicamentos. En principal, hablaremos de los opioides,

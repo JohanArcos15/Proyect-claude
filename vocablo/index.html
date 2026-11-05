@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vocablo</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Fichas de vocabulario en inglés con repetición espaciada (SM-2 de Anki y FSRS).">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#182133" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Vocablo">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Charis+SIL:ital,wght@0,400;0,700;1,400&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <a class="brand" href="#hoy" aria-label="Vocablo, inicio"><span class="brand-mark" aria-hidden="true"></span><span class="brand-name">Vocablo</span></a>
+    <nav class="nav" id="nav" aria-label="Secciones"></nav>
+    <span class="sync" id="sync" role="status"></span>
+  </header>
+  <main id="view"></main>
+</div>
+<div id="modal-root"></div>
+<div id="toast-root" aria-live="polite"></div>
+<script src="srs.js"></script>
+<script src="storage.js"></script>
+<script src="ai.js"></script>
+<script src="js/core.js"></script>
+<script src="js/study.js"></script>
+<script src="js/editor.js"></script>
+<script src="js/home.js"></script>
+<script src="js/browse.js"></script>
+<script src="js/stats.js"></script>
+<script src="js/settings.js"></script>
+<script src="js/sample.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
