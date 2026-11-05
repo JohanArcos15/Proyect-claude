@@ -129,10 +129,8 @@
     V.render();
 
     window.addEventListener('hashchange', () => {
-      if (V.state.skipHash) {
-        V.state.skipHash = false;
-        return;
-      }
+      // Ya mostramos esa vista (la puso V.go): no redibujar ni perder sus parámetros.
+      if ((location.hash.slice(1) || 'hoy') === V.state.view) return;
       V.state.params = {};
       if (location.hash.slice(1) !== 'estudiar' && V.state.session && V.state.view === 'estudiar') {
         // salir de la sesión con el botón atrás

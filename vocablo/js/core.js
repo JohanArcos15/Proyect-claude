@@ -265,6 +265,9 @@
     if (!day) {
       day = { day: key, idx, entries: [] };
       V.state.logs.set(key, day);
+    } else if (Object.isFrozen(day) || Object.isFrozen(day.entries)) {
+      day = V.clone(day);
+      V.state.logs.set(key, day);
     }
     return day;
   };
@@ -774,10 +777,9 @@
   V.routes = {};
   V.go = (view, params) => {
     V.state.params = params || {};
-    if (location.hash.slice(1) !== view) {
-      V.state.skipHash = true;
-      location.hash = view;
-    }
+    // El hashchange que provoca esto llega después y se ignora en main.js,
+    // porque para entonces la vista ya está dibujada.
+    if (location.hash.slice(1) !== view) location.hash = view;
     V.render();
   };
 

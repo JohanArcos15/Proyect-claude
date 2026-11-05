@@ -258,8 +258,10 @@
       if (last !== null) q = col.where(field, '>', last).orderBy(field).limit(500);
       const snap = await q.get();
       for (const d of snap.docs) {
+        // La base de datos de Claude entrega objetos congelados (solo lectura):
+        // la app trabaja siempre sobre una copia editable.
         const data = d.data();
-        if (data) out.push(data);
+        if (data) out.push(clone(data));
       }
       if (snap.size < 500) break;
       last = snap.docs[snap.docs.length - 1].data()[field];
@@ -293,14 +295,14 @@
         } catch (e) {
           if (e && e.code === 'invalid_argument') {
             const [a, b] = await Promise.all([notes.get(), logs.get()]);
-            noteList = a.docs.map((d) => d.data()).filter(Boolean);
-            logList = b.docs.map((d) => d.data()).filter(Boolean);
+            noteList = a.docs.map((d) => d.data()).filter(Boolean).map(clone);
+            logList = b.docs.map((d) => d.data()).filter(Boolean).map(clone);
           } else {
             throw e;
           }
         }
         return {
-          meta: metaSnap.exists ? metaSnap.data() : null,
+          meta: metaSnap.exists && metaSnap.data() ? clone(metaSnap.data()) : null,
           notes: noteList,
           logs: logList,
         };

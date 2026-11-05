@@ -613,59 +613,66 @@
     const { note, kind } = s.current;
     const key = keyOf(s.current);
     const now = Date.now();
+    let leechMsg = null;
+
+    try {
+      if (s.cram) {
+        const ref = s.cramList[0];
+        const day = V.logDay(SRS.dayIndex(now, V.settings().dayStartHour));
+        day.entries.push({ id: now, n: note.id, k: kind, d: note.deckId, r: rating, t: 'cram', cram: true, ms: Math.min(60000, now - s.shownAt) });
+        V.saveLogDay(day);
+        s.cramList.shift();
+        if (rating === 1) s.cramList.splice(Math.min(3, s.cramList.length), 0, ref);
+        else if (rating === 2) s.cramList.push(ref);
+        s.undo.push({ cram: true, ref, rating });
+      } else {
+        // Se trabaja sobre una copia: la palabra solo cambia si todo sale bien.
+        const card = note.cards[kind];
+        const before = V.clone(note);
+        const updated = V.clone(note);
+        const res = SRS.answer(card, rating, now, V.schedCfg());
+        const next = res.card;
+        if (res.leech) {
+          if (!updated.tags.includes('difícil')) updated.tags.push('difícil');
+          if (V.settings().leechAction === 'suspend') {
+            next.suspended = true;
+            leechMsg = '«' + note.word + '» se te resiste: la suspendí para que la revises en Explorar.';
+          } else {
+            leechMsg = '«' + note.word + '» se te resiste: la marqué como «difícil». Prueba a añadirle una imagen o una mnemotecnia.';
+          }
+        }
+        updated.cards[kind] = next;
+        const day = V.logDay(SRS.dayIndex(now, V.settings().dayStartHour));
+        const entry = {
+          id: now,
+          n: note.id,
+          k: kind,
+          d: note.deckId,
+          r: rating,
+          t: card.type,
+          i: res.log.ivl,
+          l: res.log.lastIvl,
+          e: V.settings().algorithm === 'fsrs' ? Math.round((next.difficulty || 0) * 100) / 100 : next.ease,
+          ms: Math.min(60000, now - s.shownAt),
+        };
+        day.entries.push(entry);
+        V.saveNote(updated);
+        V.saveLogDay(day);
+        s.undo.push({ before, dayKey: day.day, entryId: entry.id, kind, sinceNew: s.sinceNew, rating });
+        if (s.undo.length > 50) s.undo.shift();
+        if (s.currentIsNew) s.sinceNew = 0;
+        else if (card.type === 'review') s.sinceNew++;
+      }
+    } catch (err) {
+      V.toast('No se pudo guardar la respuesta: ' + ((err && err.message) || err) + '. Recarga la página.', { tone: 'bad', timeout: 8000 });
+      return;
+    }
+
     s.lastKey = key;
     if (rating === 1) s.failed.set(key, { note, kind });
     if (rating > 1) s.correct++;
     else s.again++;
     s.answered++;
-
-    if (s.cram) {
-      const ref = s.cramList.shift();
-      if (rating === 1) s.cramList.splice(Math.min(3, s.cramList.length), 0, ref);
-      else if (rating === 2) s.cramList.push(ref);
-      s.undo.push({ cram: true, ref, rating });
-      const day = V.logDay(SRS.dayIndex(now, V.settings().dayStartHour));
-      day.entries.push({ id: now, n: note.id, k: kind, d: note.deckId, r: rating, t: 'cram', cram: true, ms: Math.min(60000, now - s.shownAt) });
-      V.saveLogDay(day);
-      advance();
-      return;
-    }
-
-    const card = note.cards[kind];
-    const before = V.clone(note);
-    const res = SRS.answer(card, rating, now, V.schedCfg());
-    const next = res.card;
-    let leechMsg = null;
-    if (res.leech) {
-      if (!note.tags.includes('difícil')) note.tags.push('difícil');
-      if (V.settings().leechAction === 'suspend') {
-        next.suspended = true;
-        leechMsg = '«' + note.word + '» se te resiste: la suspendí para que la revises en Explorar.';
-      } else {
-        leechMsg = '«' + note.word + '» se te resiste: la marqué como «difícil». Prueba a añadirle una imagen o una mnemotecnia.';
-      }
-    }
-    note.cards[kind] = next;
-    V.saveNote(note);
-    const day = V.logDay(SRS.dayIndex(now, V.settings().dayStartHour));
-    const entry = {
-      id: now,
-      n: note.id,
-      k: kind,
-      d: note.deckId,
-      r: rating,
-      t: card.type,
-      i: res.log.ivl,
-      l: res.log.lastIvl,
-      e: V.settings().algorithm === 'fsrs' ? Math.round((next.difficulty || 0) * 100) / 100 : next.ease,
-      ms: Math.min(60000, now - s.shownAt),
-    };
-    day.entries.push(entry);
-    V.saveLogDay(day);
-    s.undo.push({ before, dayKey: day.day, entryId: entry.id, kind, sinceNew: s.sinceNew, rating });
-    if (s.undo.length > 50) s.undo.shift();
-    if (s.currentIsNew) s.sinceNew = 0;
-    else if (card.type === 'review') s.sinceNew++;
     if (leechMsg) V.toast(leechMsg, { timeout: 6000 });
     advance();
   }
